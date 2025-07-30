@@ -21,9 +21,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/getAllTests`
         );
-        console.log(
-          res.data.data.filter((item) => item.userId == userDetails._id)
-        );
+       
 
         setTemp(res.data.data.filter((item) => item.userId == userDetails._id));
         setData(res.data.data.filter((item) => item.userId == userDetails._id));

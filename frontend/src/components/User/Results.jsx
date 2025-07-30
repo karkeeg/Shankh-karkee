@@ -7,36 +7,749 @@ import jsPDF from "jspdf";
 const Results = () => {
   const { userDetails, transcript, selectedTest } = useAppContext();
 
-  console.log("Transcript : ", transcript);
+  
 
   const page1Ref = useRef();
   const page2Ref = useRef();
 
   const handleDownload = async () => {
-    const input1 = page1Ref.current;
-    const input2 = page2Ref.current;
-    if (!input1 || !input2) return;
-
     const pdf = new jsPDF("p", "mm", "a4");
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentWidth = pdfWidth - 2 * margin;
+    let yPosition = margin;
 
-    const canvas1 = await html2canvas(input1, { scale: 2, useCORS: true });
-    const imgData1 = canvas1.toDataURL("image/png");
-    const imgHeight1 = (canvas1.height * pdfWidth) / canvas1.width;
-    pdf.addImage(imgData1, "PNG", 0, 0, pdfWidth, imgHeight1);
+    // Helper function to add text with proper wrapping
+    const addWrappedText = (text, x, y, maxWidth, fontSize = 12) => {
+      pdf.setFontSize(fontSize);
+      const lines = pdf.splitTextToSize(text, maxWidth);
+      pdf.text(lines, x, y);
+      return lines.length * (fontSize * 0.4); // Return height used
+    };
 
-    const canvas2 = await html2canvas(input2, { scale: 2, useCORS: true });
-    const imgData2 = canvas2.toDataURL("image/png");
-    const imgHeight2 = (canvas2.height * pdfWidth) / canvas2.width;
+    // Helper function to add section header
+    const addSectionHeader = (text, y) => {
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(52, 133, 108); // #34856C
+      pdf.text(text, margin, y);
+      return y + 8;
+    };
 
-    pdf.addPage();
-    pdf.addImage(imgData2, "PNG", 0, 0, pdfWidth, imgHeight2);
+    // Helper function to add subsection header
+    const addSubsectionHeader = (text, y) => {
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(text, margin, y);
+      return y + 6;
+    };
 
-    pdf.save("assessment-report.pdf");
+    // Helper function to add normal text
+    const addNormalText = (text, y, fontSize = 12) => {
+      pdf.setFontSize(fontSize);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(0, 0, 0);
+      return addWrappedText(text, margin, y, contentWidth, fontSize);
+    };
+
+    // Helper function to add score with color
+    const addScore = (label, score, y) => {
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`${label}: `, margin, y);
+
+      // Color based on score
+      if (score <= 39) {
+        pdf.setTextColor(255, 107, 91); // #FF6B5B
+      } else if (score <= 69) {
+        pdf.setTextColor(249, 168, 38); // #F9A826
+      } else {
+        pdf.setTextColor(52, 133, 108); // #34856C
+      }
+
+      pdf.text(`${Math.ceil(score)}%`, margin + 30, y);
+      pdf.setTextColor(0, 0, 0);
+      return y + 6;
+    };
+
+    // Helper function to create a table
+    const createTable = (headers, data, startY, colWidths) => {
+      const rowHeight = 8;
+      const headerHeight = 10;
+
+      // Draw table border
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.5);
+
+      // Draw headers
+      pdf.setFillColor(52, 133, 108); // #34856C
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(255, 255, 255);
+
+      let currentX = margin;
+      headers.forEach((header, index) => {
+        pdf.rect(currentX, startY, colWidths[index], headerHeight, "F");
+        pdf.text(header, currentX + 2, startY + 6);
+        currentX += colWidths[index];
+      });
+
+      // Draw data rows
+      pdf.setFillColor(248, 250, 250); // #F8FAFA
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFont("helvetica", "normal");
+
+      data.forEach((row, rowIndex) => {
+        const rowY = startY + headerHeight + rowIndex * rowHeight;
+        currentX = margin;
+
+        row.forEach((cell, cellIndex) => {
+          const bgColor =
+            rowIndex % 2 === 0 ? [248, 250, 250] : [255, 255, 255];
+          pdf.setFillColor(...bgColor);
+          pdf.rect(currentX, rowY, colWidths[cellIndex], rowHeight, "F");
+          pdf.text(cell, currentX + 2, rowY + 5);
+          currentX += colWidths[cellIndex];
+        });
+      });
+
+      // Draw borders
+      currentX = margin;
+      headers.forEach((_, index) => {
+        pdf.rect(
+          currentX,
+          startY,
+          colWidths[index],
+          headerHeight + data.length * rowHeight,
+          "S"
+        );
+        currentX += colWidths[index];
+      });
+
+      return startY + headerHeight + data.length * rowHeight + 10;
+    };
+
+    // Helper function to create a radar chart
+    const createRadarChart = (
+      data,
+      centerX,
+      centerY,
+      radius,
+      title,
+      startY
+    ) => {
+      const angleStep = (2 * Math.PI) / Object.keys(data).length;
+      const angles = Object.keys(data).map((_, index) => index * angleStep);
+      const labels = Object.keys(data);
+      const values = Object.values(data);
+
+      // Draw title
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(52, 133, 108);
+      pdf.text(title, centerX - 20, startY);
+
+      // Draw radar grid
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setLineWidth(0.2);
+
+      // Draw concentric circles
+      for (let i = 1; i <= 5; i++) {
+        const currentRadius = (radius * i) / 5;
+        pdf.circle(centerX, centerY, currentRadius, "S");
+      }
+
+      // Draw radial lines
+      angles.forEach((angle) => {
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        pdf.line(centerX, centerY, x, y);
+      });
+
+      // Draw data points and fill area
+      const points = angles.map((angle, index) => {
+        const value = values[index] / 100; // Normalize to 0-1
+        const r = radius * value;
+        return {
+          x: centerX + r * Math.cos(angle),
+          y: centerY + r * Math.sin(angle),
+        };
+      });
+
+      // Draw radar area outline (don't fill to avoid black screen)
+      pdf.setDrawColor(52, 133, 108);
+      pdf.setLineWidth(1);
+
+      pdf.moveTo(points[0].x, points[0].y);
+      points.forEach((point) => {
+        pdf.lineTo(point.x, point.y);
+      });
+      pdf.lineTo(points[0].x, points[0].y);
+      pdf.stroke();
+
+      // Draw data points
+      points.forEach((point) => {
+        pdf.setFillColor(52, 133, 108);
+        pdf.circle(point.x, point.y, 2, "F");
+      });
+
+      // Draw labels
+      pdf.setFontSize(8);
+      pdf.setTextColor(0, 0, 0);
+      angles.forEach((angle, index) => {
+        const labelRadius = radius + 20;
+        const x = centerX + labelRadius * Math.cos(angle);
+        const y = centerY + labelRadius * Math.sin(angle);
+
+        // Adjust text position based on angle for better readability
+        let textX = x;
+        let textY = y;
+
+        if (angle >= 0 && angle < Math.PI / 2) {
+          textX = x - 5;
+          textY = y - 5;
+        } else if (angle >= Math.PI / 2 && angle < Math.PI) {
+          textX = x - 15;
+          textY = y - 5;
+        } else if (angle >= Math.PI && angle < (3 * Math.PI) / 2) {
+          textX = x - 15;
+          textY = y + 5;
+        } else {
+          textX = x - 5;
+          textY = y + 5;
+        }
+
+        pdf.text(labels[index], textX, textY);
+      });
+
+      return startY + radius * 2 + 30;
+    };
+
+    // Helper function to create a bar chart
+    const createBarChart = (data, startX, startY, width, height, title) => {
+      const maxValue = Math.max(...Object.values(data));
+      const barWidth = width / Object.keys(data).length;
+      const barSpacing = 5;
+
+      // Draw title
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(52, 133, 108);
+      pdf.text(title, startX, startY);
+
+      // Draw bars
+      Object.entries(data).forEach(([label, value], index) => {
+        const barHeight = (value / maxValue) * height;
+        const x = startX + index * (barWidth + barSpacing);
+        const y = startY + 15 + (height - barHeight);
+
+        // Color based on value
+        if (value <= 39) {
+          pdf.setFillColor(255, 107, 91); // #FF6B5B
+        } else if (value <= 69) {
+          pdf.setFillColor(249, 168, 38); // #F9A826
+        } else {
+          pdf.setFillColor(52, 133, 108); // #34856C
+        }
+
+        pdf.rect(x, y, barWidth, barHeight, "F");
+
+        // Draw value on bar
+        pdf.setFontSize(8);
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(
+          `${Math.ceil(value)}%`,
+          x + barWidth / 2 - 8,
+          y + barHeight / 2 + 2
+        );
+
+        // Draw label
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(label, x + barWidth / 2 - 8, startY + 15 + height + 5);
+      });
+
+      return startY + height + 40;
+    };
+
+    // Page 1: Header and Overview
+    // ============================
+
+    // Title
+    pdf.setFontSize(24);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(52, 133, 108); // #34856C
+    pdf.text("Shankh Voice Assessment Report", margin, yPosition);
+    yPosition += 15;
+
+    // Test Information Table
+    yPosition = addSectionHeader("Test Information", yPosition);
+    yPosition += 5;
+
+    const testInfoHeaders = ["Field", "Value"];
+    const testInfoData = [
+      ["Test ID", selectedTest._id],
+      ["Date", selectedTest.date],
+      ["Language", selectedTest.language || "Auto-detected"],
+      ["Overall Score", `${Math.ceil(selectedTest.overallScore)}%`],
+    ];
+    const testInfoWidths = [50, 110];
+    yPosition = createTable(
+      testInfoHeaders,
+      testInfoData,
+      yPosition,
+      testInfoWidths
+    );
+
+    // User Information Table
+    yPosition = addSectionHeader("User Information", yPosition);
+    yPosition += 5;
+
+    const userInfoHeaders = ["Field", "Value"];
+    const userInfoData = [
+      ["Name", userDetails.userName],
+      ["Organization", userDetails.orgName],
+      ["Location", userDetails.location || "Not specified"],
+      ["Occupation", userDetails.occupation || "Not specified"],
+    ];
+    const userInfoWidths = [50, 110];
+    yPosition = createTable(
+      userInfoHeaders,
+      userInfoData,
+      yPosition,
+      userInfoWidths
+    );
+
+    // Overall Score with Visual Indicator
+    yPosition = addSectionHeader("Overall Assessment", yPosition);
+    yPosition += 5;
+
+    const overallScore = Math.ceil(selectedTest.overallScore);
+    let performanceLevel = "";
+
+    if (overallScore <= 39) {
+      performanceLevel = "Novice";
+    } else if (overallScore <= 69) {
+      performanceLevel = "Emerging";
+    } else {
+      performanceLevel = "Proficient";
+    }
+
+    // Create score visualization
+    const scoreBarWidth = 120;
+    const scoreBarHeight = 15;
+    const scoreBarX = margin;
+    const scoreBarY = yPosition;
+
+    // Background bar
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(scoreBarX, scoreBarY, scoreBarWidth, scoreBarHeight, "F");
+
+    // Score bar
+    if (overallScore <= 39) {
+      pdf.setFillColor(255, 107, 91); // #FF6B5B
+    } else if (overallScore <= 69) {
+      pdf.setFillColor(249, 168, 38); // #F9A826
+    } else {
+      pdf.setFillColor(52, 133, 108); // #34856C
+    }
+
+    const filledWidth = (overallScore / 100) * scoreBarWidth;
+    pdf.rect(scoreBarX, scoreBarY, filledWidth, scoreBarHeight, "F");
+
+    // Score text
+    pdf.setFontSize(12);
+    pdf.setFont("helvetica", "bold");
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(
+      `${overallScore}%`,
+      scoreBarX + scoreBarWidth + 10,
+      scoreBarY + 10
+    );
+    pdf.text(
+      `(${performanceLevel})`,
+      scoreBarX + scoreBarWidth + 10,
+      scoreBarY + 20
+    );
+
+    yPosition += 30;
+
+    // Performance Scale Table
+    yPosition = addSubsectionHeader("Performance Scale", yPosition);
+    yPosition += 5;
+
+    const scaleHeaders = ["Level", "Range", "Description"];
+    const scaleData = [
+      ["Novice", "0-39%", "Basic understanding, needs significant improvement"],
+      ["Emerging", "40-69%", "Developing skills, shows potential"],
+      ["Proficient", "70-100%", "Strong performance, demonstrates mastery"],
+    ];
+    const scaleWidths = [30, 25, 105];
+    yPosition = createTable(scaleHeaders, scaleData, yPosition, scaleWidths);
+
+    // Voice Insights Table
+    yPosition = addSectionHeader("Voice Insights Summary", yPosition);
+    yPosition += 5;
+
+    const voiceHeaders = ["Parameter", "Score", "Level"];
+    const voiceData = [
+      [
+        "Fluency",
+        `${Math.ceil(selectedTest.voiceInsights.fluency)}%`,
+        selectedTest.voiceInsights.fluency <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.fluency <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+      [
+        "Tone Modulation",
+        `${Math.ceil(selectedTest.voiceInsights.toneModulation)}%`,
+        selectedTest.voiceInsights.toneModulation <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.toneModulation <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+      [
+        "Clarity",
+        `${Math.ceil(selectedTest.voiceInsights.clarity)}%`,
+        selectedTest.voiceInsights.clarity <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.clarity <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+      [
+        "Filler Words",
+        `${Math.ceil(selectedTest.voiceInsights.fillerWords)}%`,
+        selectedTest.voiceInsights.fillerWords <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.fillerWords <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+    ];
+    const voiceWidths = [50, 30, 80];
+    yPosition = createTable(voiceHeaders, voiceData, yPosition, voiceWidths);
+
+    // Behavior Insights Table
+    yPosition = addSectionHeader("Behavior Insights Summary", yPosition);
+    yPosition += 5;
+
+    const behaviorHeaders = ["Parameter", "Score", "Level"];
+    const behaviorData = [
+      [
+        "Emotional Regulation",
+        `${Math.ceil(selectedTest.behaviorInsights.emotionalRegulation)}%`,
+        selectedTest.behaviorInsights.emotionalRegulation <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.emotionalRegulation <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+      [
+        "Confidence & Presence",
+        `${Math.ceil(selectedTest.behaviorInsights.confidenceAndPresence)}%`,
+        selectedTest.behaviorInsights.confidenceAndPresence <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.confidenceAndPresence <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+      [
+        "Pacing & Pauses",
+        `${Math.ceil(selectedTest.behaviorInsights.pacingAndPauses)}%`,
+        selectedTest.behaviorInsights.pacingAndPauses <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.pacingAndPauses <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+      [
+        "Engagement",
+        `${Math.ceil(selectedTest.behaviorInsights.engagement)}%`,
+        selectedTest.behaviorInsights.engagement <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.engagement <= 69
+          ? "Emerging"
+          : "Proficient",
+      ],
+    ];
+    const behaviorWidths = [50, 30, 80];
+    yPosition = createTable(
+      behaviorHeaders,
+      behaviorData,
+      yPosition,
+      behaviorWidths
+    );
+
+    // Filler Words Analysis
+    yPosition = addSectionHeader("Filler Words Analysis", yPosition);
+    yPosition += 5;
+
+    const totalFillers = Object.values(selectedTest.fillerWordsUsed).reduce(
+      (a, b) => a + b,
+      0
+    );
+    yPosition += addNormalText(
+      `Total Filler Words Used: ${totalFillers}`,
+      yPosition
+    );
+    yPosition += 10;
+
+    // Filler Words Bar Chart
+    const sortedFillers = Object.entries(selectedTest.fillerWordsUsed)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    const fillerData = Object.fromEntries(sortedFillers);
+    yPosition = createBarChart(
+      fillerData,
+      margin,
+      yPosition,
+      150,
+      60,
+      "Most Used Filler Words"
+    );
+
+    // Check if we need a new page
+    if (yPosition > pdfHeight - 50) {
+      pdf.addPage();
+      yPosition = margin;
+    }
+
+    // Page 2: Visual Analysis
+    // =======================
+
+    // Voice Insights Radar Chart
+    yPosition = addSectionHeader("Voice Insights Radar Chart", yPosition);
+    yPosition += 10;
+
+    const voiceCenterX = margin + 80;
+    const voiceCenterY = yPosition + 45;
+    const voiceRadius = 40;
+    yPosition = createRadarChart(
+      selectedTest.voiceInsights,
+      voiceCenterX,
+      voiceCenterY,
+      voiceRadius,
+      "Voice Mechanics",
+      yPosition
+    );
+
+    // Check if we need a new page
+    if (yPosition > pdfHeight - 100) {
+      pdf.addPage();
+      yPosition = margin;
+    }
+
+    // Behavior Insights Radar Chart
+    yPosition = addSectionHeader("Behavior Insights Radar Chart", yPosition);
+    yPosition += 10;
+
+    const behaviorCenterX = margin + 80;
+    const behaviorCenterY = yPosition + 45;
+    const behaviorRadius = 40;
+    yPosition = createRadarChart(
+      selectedTest.behaviorInsights,
+      behaviorCenterX,
+      behaviorCenterY,
+      behaviorRadius,
+      "Behavior Psychology",
+      yPosition
+    );
+
+    // Check if we need a new page
+    if (yPosition > pdfHeight - 100) {
+      pdf.addPage();
+      yPosition = margin;
+    }
+
+    // Detailed Analysis Table
+    yPosition = addSectionHeader("Detailed Parameter Analysis", yPosition);
+    yPosition += 5;
+
+    const analysisHeaders = ["Parameter", "Score", "Level", "Description"];
+    const analysisData = [
+      [
+        "Fluency",
+        `${Math.ceil(selectedTest.voiceInsights.fluency)}%`,
+        selectedTest.voiceInsights.fluency <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.fluency <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Smooth speech without interruptions or hesitations",
+      ],
+      [
+        "Tone Modulation",
+        `${Math.ceil(selectedTest.voiceInsights.toneModulation)}%`,
+        selectedTest.voiceInsights.toneModulation <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.toneModulation <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Voice pitch, volume, and speed variation",
+      ],
+      [
+        "Clarity",
+        `${Math.ceil(selectedTest.voiceInsights.clarity)}%`,
+        selectedTest.voiceInsights.clarity <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.clarity <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Clear and distinct pronunciation",
+      ],
+      [
+        "Filler Words",
+        `${Math.ceil(selectedTest.voiceInsights.fillerWords)}%`,
+        selectedTest.voiceInsights.fillerWords <= 39
+          ? "Novice"
+          : selectedTest.voiceInsights.fillerWords <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Minimal use of unnecessary words",
+      ],
+      [
+        "Emotional Regulation",
+        `${Math.ceil(selectedTest.behaviorInsights.emotionalRegulation)}%`,
+        selectedTest.behaviorInsights.emotionalRegulation <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.emotionalRegulation <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Control and expression of emotions",
+      ],
+      [
+        "Confidence & Presence",
+        `${Math.ceil(selectedTest.behaviorInsights.confidenceAndPresence)}%`,
+        selectedTest.behaviorInsights.confidenceAndPresence <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.confidenceAndPresence <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Self-assurance and attention command",
+      ],
+      [
+        "Pacing & Pauses",
+        `${Math.ceil(selectedTest.behaviorInsights.pacingAndPauses)}%`,
+        selectedTest.behaviorInsights.pacingAndPauses <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.pacingAndPauses <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Timing, rhythm, and strategic pauses",
+      ],
+      [
+        "Engagement",
+        `${Math.ceil(selectedTest.behaviorInsights.engagement)}%`,
+        selectedTest.behaviorInsights.engagement <= 39
+          ? "Novice"
+          : selectedTest.behaviorInsights.engagement <= 69
+          ? "Emerging"
+          : "Proficient",
+        "Audience connection and interest maintenance",
+      ],
+    ];
+    const analysisWidths = [40, 25, 25, 70];
+    yPosition = createTable(
+      analysisHeaders,
+      analysisData,
+      yPosition,
+      analysisWidths
+    );
+
+    // Check if we need a new page
+    if (yPosition > pdfHeight - 100) {
+      pdf.addPage();
+      yPosition = margin;
+    }
+
+    // Recommendations
+    yPosition = addSectionHeader("Personalized Recommendations", yPosition);
+    yPosition += 5;
+
+    const recommendations = [];
+
+    if (selectedTest.voiceInsights.fluency <= 39) {
+      recommendations.push(
+        "Practice speaking exercises to improve fluency and reduce hesitations"
+      );
+    }
+    if (selectedTest.voiceInsights.clarity <= 39) {
+      recommendations.push(
+        "Focus on clear pronunciation and articulation exercises"
+      );
+    }
+    if (selectedTest.voiceInsights.fillerWords <= 39) {
+      recommendations.push(
+        "Work on reducing filler words through conscious practice and awareness"
+      );
+    }
+    if (selectedTest.behaviorInsights.confidenceAndPresence <= 39) {
+      recommendations.push(
+        "Build confidence through regular practice and positive self-talk"
+      );
+    }
+    if (selectedTest.behaviorInsights.engagement <= 39) {
+      recommendations.push(
+        "Practice audience engagement techniques and storytelling"
+      );
+    }
+
+    if (recommendations.length === 0) {
+      recommendations.push(
+        "Continue practicing to maintain and further improve your excellent communication skills"
+      );
+    }
+
+    const recHeaders = ["Priority", "Recommendation"];
+    const recData = recommendations.map((rec, index) => [`${index + 1}`, rec]);
+    const recWidths = [25, 135];
+    yPosition = createTable(recHeaders, recData, yPosition, recWidths);
+    yPosition += 10;
+
+    // Check if we need a new page for transcript
+    if (yPosition > pdfHeight - 100) {
+      pdf.addPage();
+      yPosition = margin;
+    }
+
+    // Transcript
+    yPosition = addSectionHeader("Speech Transcript", yPosition);
+    yPosition += 5;
+
+    yPosition += addNormalText(
+      selectedTest.transcript || "No transcript available",
+      yPosition
+    );
+    yPosition += 10;
+
+    // Footer
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "italic");
+    pdf.setTextColor(128, 128, 128);
+    pdf.text(
+      "Generated by Shankh Voice Assessment Platform",
+      margin,
+      pdfHeight - 10
+    );
+    pdf.text(
+      `Report generated on ${new Date().toLocaleDateString()}`,
+      margin,
+      pdfHeight - 5
+    );
+
+    // Save the PDF
+    pdf.save(
+      `shankh-assessment-${userDetails.userName}-${selectedTest.date}.pdf`
+    );
   };
 
-  console.log(selectedTest);
+
 
   return (
     <div className="pl-4 sm:pl-[20px] space-y-4 h-[88svh] overflow-y-scroll w-full bg-[#F8FAFA] pr-4 sm:pr-[20px] pt-[32px] pb-[20px]">
@@ -69,10 +782,10 @@ const Results = () => {
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-download-icon lucide-download"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-download-icon lucide-download"
               >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
@@ -123,10 +836,10 @@ const Results = () => {
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-trending-up-icon lucide-trending-up"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-trending-up-icon lucide-trending-up"
               >
                 <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
                 <polyline points="16 7 22 7 22 13" />
@@ -175,7 +888,7 @@ const Results = () => {
             </div>
           </div>
           <div
-            style={{ fontFamily: "Inter" }}
+            style={{ fontFamily: "Poppins" }}
             className="items-center text-center text-[14px] p-[5px] justify-center flex flex-wrap gap-4 sm:gap-[140px]"
           >
             <div className="flex space-x-2 items-center">
@@ -526,7 +1239,7 @@ const Results = () => {
               <div className="flex justify-between">
                 <div className="flex justify-between">
                   <span className="font-semibold text-[#5F6C7B] text-[16px]">
-                    Pacing And Pauses
+                    Pacing & Pauses
                   </span>
                   <span className="items-top text-center text-white rounded-full bg-[#5F6C7B] w-[12px] text-[10px] h-[12px]">
                     i

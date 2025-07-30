@@ -28,7 +28,7 @@ const EditUser = ({ selectedUser, setStatus }) => {
           `${import.meta.env.VITE_API_BASE_URL}/api/giveCredits`,
           selectedUser
         );
-        console.log(res.data.message);
+        
       } catch (error) {
         console.log(error);
       }
@@ -36,7 +36,7 @@ const EditUser = ({ selectedUser, setStatus }) => {
     try {
       const url = `${import.meta.env.VITE_API_BASE_URL}/api/editUser`;
       const { data: res } = await axios.post(url, data);
-      console.log(res.message);
+      
       toast.success(res.message);
       toast.success("User Edited successfully !");
       setStatus("overview");
@@ -66,7 +66,7 @@ const EditUser = ({ selectedUser, setStatus }) => {
     }));
   };
 
-  console.log(data.credits);
+  
 
   return (
     <form
