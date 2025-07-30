@@ -30,20 +30,27 @@ const Notifications = ({setSelectedUser, setStatus}) => {
   
 
   return (
-    <div className='flex flex-col w-[50%] gap-8'>
-      {data ? data.map((item) => {
-        return (
-          <div className='flex p-8 rounded-2xl bg-[#BCEBD7] flex-col gap-4'>
-            <div className='flex items-center justify-between'>
-              <span className='text-[20px]'>Credit Request</span>
-              <span className='text-gray-500'>{item.date}</span>
-            </div>
-            <p className=' italic'><span className='font-bold'>{item.userName}</span> has requested additional credits.</p>
-            <button onClick={() => handleView(item)} type='submit' className='pt-[10px] cursor-pointer pr-[53px] pb-[10px] pl-[53px] w-[200px] rounded-lg text-white bg-[#34856C]'>View User</button>
-          </div>
-        )
-      }) : null}
-    </div>
+    <div className='flex flex-col w-full sm:w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] gap-8 mx-auto'>
+  {data ? data.map((item) => {
+    return (
+      <div key={item.id} className='flex p-6 sm:p-8 rounded-2xl bg-[#BCEBD7] flex-col gap-4'>
+        <div className='flex items-center justify-between flex-wrap gap-2'>
+          <span className='text-[18px] sm:text-[20px]'>Credit Request</span>
+          <span className='text-gray-500 text-sm sm:text-base'>{item.date}</span>
+        </div>
+        <p className='italic text-sm sm:text-base'><span className='font-bold'>{item.userName}</span> has requested additional credits.</p>
+        <button 
+          onClick={() => handleView(item)} 
+          type='submit' 
+          className='pt-[10px] pr-[53px] pb-[10px] pl-[53px] w-full sm:w-[200px] rounded-lg text-white bg-[#34856C]'
+        >
+          View User
+        </button>
+      </div>
+    )
+  }) : null}
+</div>
+
   )
 }
 

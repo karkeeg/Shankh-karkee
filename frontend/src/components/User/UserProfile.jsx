@@ -40,7 +40,7 @@ const UserProfile = () => {
       const url = `${import.meta.env.VITE_API_BASE_URL}/api/editUser`;
       const { data: res } = await axios.post(url, data);
       setUserDetails(data);
-      alert(res.message);
+      toast.success(res.message);
     } catch (error) {
       if (error.response) {
         // Server responded with a status code outside the 2xx range
@@ -80,7 +80,7 @@ const UserProfile = () => {
         }
       );
       console.log(res);
-      alert(res.data.message);
+      toast.success(res.data.message);
     } catch (error) {
       console.log("Error requesting credits", error);
     }

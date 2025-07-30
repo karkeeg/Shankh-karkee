@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/appContext";
 import axios from "axios";
-import Notifications from "./Notifications";
+import toast from "react-hot-toast";
+import Notifications from "../User/Notifications";
 
 const AccountSettings = () => {
   const { userDetails, setUserDetails } = useAppContext();
@@ -10,7 +11,7 @@ const AccountSettings = () => {
   const [active, setActive] = useState("changePass");
 
   const [data, setData] = useState({
-    id: userDetails._id,
+    _id: userDetails._id,
     oldPassword: "",
     newPassword: "",
   });
@@ -33,7 +34,7 @@ const AccountSettings = () => {
       const { data: res } = await axios.post(url, data);
       console.log(res.data);
       setUserDetails(res.data);
-      alert(res.message);
+      toast.success(res.message);
       setData({
         _id: userDetails._id,
         oldPassword: "",

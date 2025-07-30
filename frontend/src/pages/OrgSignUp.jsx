@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
 import { useAppContext } from "../context/appContext";
@@ -41,7 +41,7 @@ const OrgSignUp = () => {
       const { data: res } = await axios.post(url, data);
       setOrgDetails(data);
       console.log(res.message);
-      alert("Admin Registered successfully !");
+      toast.success("Admin Registered successfully !");
       navigate("/orgLogin");
     } catch (error) {
       if (error.response) {

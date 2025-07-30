@@ -58,6 +58,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
       )
     );
 
+    console.log("data", data);
   }, [language, startDate, endDate]);
 
   useEffect(() => {
@@ -213,31 +214,27 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
           </h1>
           <div
             style={{ fontFamily: "Inter" }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 text-[18px]"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-[18px]"
           >
-            <div className="shadow-lg rounded-lg p-4 lg:p-[20px] w-full min-h-[400px] flex flex-col">
-              <h3 className="font-semibold mb-4">
+            <div className="shadow-lg rounded-lg p-[20px] w-full">
+              <h3 className="font-semibold">
                 Voice Insights :
                 <span className="font-medium">
                   {" "}
                   The Mechanics of Impactful Speech
                 </span>
               </h3>
-              <div className="flex-1 flex items-center justify-center">
-                <SpiderChart testData={voiceAverages} />
-              </div>
+              <SpiderChart testData={voiceAverages} />
             </div>
-            <div className="shadow-lg rounded-lg p-4 lg:p-[20px] w-full min-h-[400px] flex flex-col">
-              <h3 className="font-semibold mb-4">
+            <div className="shadow-lg rounded-lg p-[20px] w-full">
+              <h3 className="font-semibold">
                 Behavior Insights :
                 <span className="font-medium">
                   {" "}
                   The Psychology of your voice
                 </span>
               </h3>
-              <div className="flex-1 flex items-center justify-center">
-                <SpiderChart testData={behaviorAverages} />
-              </div>
+              <SpiderChart testData={behaviorAverages} />
             </div>
           </div>
         </div>

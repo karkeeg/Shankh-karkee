@@ -20,13 +20,16 @@ import OrgDashboard from "./pages/OrgDashboard";
 import OrgSignUp from "./pages/OrgSignUp";
 import OrgLogin from "./pages/OrgLogin";
 import UserDashboard from "./pages/UserDashboard";
-
-
+import { Toaster } from "react-hot-toast";
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease : "easeInOut" } },
-  exit: { opacity: 0, y: 10, transition: { duration: 0.3 , ease : "easeInOut"} },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: "easeInOut" },
+  },
+  exit: { opacity: 0, y: 10, transition: { duration: 0.3, ease: "easeInOut" } },
 };
 
 function PageWrapper({ children }) {
@@ -43,39 +46,142 @@ function PageWrapper({ children }) {
 }
 
 function App() {
-
   const location = useLocation();
 
   return (
     <>
-      
-      <AnimatePresence mode = "wait">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#34856C",
+            color: "#fff",
+            borderRadius: "8px",
+            fontSize: "14px",
+            fontWeight: "500",
+            padding: "12px 16px",
+          },
+          success: {
+            style: {
+              background: "#34856C",
+              color: "#fff",
+            },
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#34856C",
+            },
+          },
+          error: {
+            style: {
+              background: "#FF6B5B",
+              color: "#fff",
+            },
+            iconTheme: {
+              primary: "#fff",
+              secondary: "#FF6B5B",
+            },
+          },
+        }}
+      />
+
+      <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Home/>} />
-          <Route path="/login" element={<Login/>} />
-          <Route path="/signUp" element={<SignUp/>} />
-          <Route path="/otpLogin" element={<OtpLogin/>} />
-          <Route path="/userDashboard" element={<UserDashboard/>} />
-          <Route path="/practice" element={<Practice/>} />
-            <Route path="/onboarding" element={<Onboarding/>} >
-              <Route index element={<PageWrapper><Onboarding1 /></PageWrapper>} />
-              <Route path="step1" element={<PageWrapper><Onboarding1 /></PageWrapper>} />
-              <Route path="step2" element={<PageWrapper><Onboarding2 /></PageWrapper>} />
-              <Route path="step3" element={<PageWrapper><Onboarding3 /></PageWrapper>} />
-              <Route path="step4" element={<PageWrapper><Onboarding4 /></PageWrapper>} />
-              <Route path="step5" element={<PageWrapper><Onboarding5 /></PageWrapper>} />
-              <Route path="step6" element={<PageWrapper><Onboarding6 /></PageWrapper>} />
-              <Route path="step7" element={<PageWrapper><Onboarding7 /></PageWrapper>} />
-              <Route path="step8" element={<PageWrapper><Onboarding8 /></PageWrapper>} />
-              <Route path="step9" element={<PageWrapper><Onboarding9 /></PageWrapper>} />
-            </Route>
-          <Route path="/orgDashboard" element = {<OrgDashboard/>}/>
-          <Route path="/orgSignUp" element = {<OrgSignUp/>}/>
-          <Route path="/orgLogin" element = {<OrgLogin/>}/>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signUp" element={<SignUp />} />
+          <Route path="/otpLogin" element={<OtpLogin />} />
+          <Route path="/userDashboard" element={<UserDashboard />} />
+          <Route path="/practice" element={<Practice />} />
+          <Route path="/onboarding" element={<Onboarding />}>
+            <Route
+              index
+              element={
+                <PageWrapper>
+                  <Onboarding1 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step1"
+              element={
+                <PageWrapper>
+                  <Onboarding1 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step2"
+              element={
+                <PageWrapper>
+                  <Onboarding2 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step3"
+              element={
+                <PageWrapper>
+                  <Onboarding3 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step4"
+              element={
+                <PageWrapper>
+                  <Onboarding4 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step5"
+              element={
+                <PageWrapper>
+                  <Onboarding5 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step6"
+              element={
+                <PageWrapper>
+                  <Onboarding6 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step7"
+              element={
+                <PageWrapper>
+                  <Onboarding7 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step8"
+              element={
+                <PageWrapper>
+                  <Onboarding8 />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="step9"
+              element={
+                <PageWrapper>
+                  <Onboarding9 />
+                </PageWrapper>
+              }
+            />
+          </Route>
+          <Route path="/orgDashboard" element={<OrgDashboard />} />
+          <Route path="/orgSignUp" element={<OrgSignUp />} />
+          <Route path="/orgLogin" element={<OrgLogin />} />
         </Routes>
       </AnimatePresence>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

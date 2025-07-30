@@ -44,8 +44,7 @@ const OrgDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-full relative">
-      {/* Sidebar - Overlay on mobile, fixed on desktop */}
+    <div className="flex h-screen w-screen relative">
       <div
         className={`fixed lg:relative z-50 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -58,89 +57,95 @@ const OrgDashboard = () => {
         />
       </div>
 
-      {/* Main Content - No translation, always in place */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Header */}
         <div className="pl-4 lg:pl-[20px] w-full justify-between shadow-md h-[80px] items-center flex space-x-2 lg:space-x-[40px] pt-[14px] pb-[14px] pr-4 lg:pr-[20px] bg-white">
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
-          <div
-            className={`flex  w-[70%] justify-between ${
-              status != "home" ? "invisible" : null
-            }`}
-          >
-            <select
-              onClick={() => setBlurBg(true)}
-              className="rounded-lg focus:outline-none bg-gray-50 text-sm"
-              onChange={handleLanguage}
-              value={language}
-              id="lang"
-              name="Language"
-            >
-              <option value="All">All</option>
-              <option value="Hindi">Hindi</option>
-              <option value="English">English</option>
-              <option value="Telugu">Telugu</option>
-            </select>
-            <div className="flex items-center space-x-[20px]">
-              <Datepicker
-                format="dd/MM/yyyy"
-                language="en"
-                maxDate={new Date(endDate)}
-                onChange={handleStartDate}
-                id="startDate"
-                icon={null}
-              />
-              <span>to</span>
-              <Datepicker
-                format="dd/MM/yyyy"
-                language="en"
-                minDate={new Date(startDate)}
-                onChange={handleEndDate}
-                maxDate={new Date()}
-                id="endDate"
-                icon={null}
-              />
-            </div>
-          </div>
-          <div className="flex space-x-[16px] items-center">
-            <span className="font-bold" style={{ fontFamily: "Poppins" }}>
-              Welcome <span></span>
-              {orgDetails.orgName}
-            </span>
+          <div className="flex items-center space-x-2 lg:space-x-[40px]">
             <button
-              onClick={() => setStatus("settings")}
-              className="cursor-pointer"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden p-2 rounded-md hover:bg-gray-100"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
                 height="24"
                 viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+
+            {status == "home" && (
+              <div className="flex flex-row items-center space-x-2 sm:space-x-4 lg:space-x-[20px] flex-1 lg:flex-none justify-center">
+                <select
+                  onClick={() => setBlurBg(true)}
+                  className="rounded-lg focus:outline-none bg-gray-50 text-xs sm:text-sm w-20 sm:w-auto px-2 sm:px-3 py-1 sm:py-2"
+                  onChange={handleLanguage}
+                  value={language}
+                  id="lang"
+                  name="Language"
+                >
+                  <option value="All">All</option>
+                  <option value="Hindi">Hindi</option>
+                  <option value="English">English</option>
+                  <option value="Telugu">Telugu</option>
+                </select>
+
+                {/* Date Range - Visible on small screens and up */}
+                <div className="flex items-center space-x-2 lg:space-x-[20px]">
+                  <Datepicker
+                    format="dd/MM/yyyy"
+                    language="en"
+                    maxDate={new Date(endDate)}
+                    onChange={handleStartDate}
+                    id="startDate"
+                    icon={null}
+                  />
+                  <span className="text-xs sm:text-sm">to</span>
+                  <Datepicker
+                    format="dd/MM/yyyy"
+                    language="en"
+                    minDate={new Date(startDate)}
+                    onChange={handleEndDate}
+                    maxDate={new Date()}
+                    id="endDate"
+                    icon={null}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex space-x-2 lg:space-x-[16px] items-center">
+            <span
+              className="font-bold text-xs sm:text-sm lg:text-base"
+              style={{ fontFamily: "Poppins" }}
+            >
+              Welcome <span></span>
+              {orgDetails.orgName}
+            </span>
+            <button
+              onClick={() => setStatus("settings")}
+              className="cursor-pointer p-1 lg:p-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
                 fill="#34856C"
                 stroke="#34856C"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-user-icon lucide-user"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-user-icon lucide-user"
               >
                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
@@ -148,6 +153,7 @@ const OrgDashboard = () => {
             </button>
           </div>
         </div>
+
         {status === "home" ? (
           <OrgHome
             setStatus={setStatus}

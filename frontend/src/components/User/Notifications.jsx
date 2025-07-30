@@ -1,43 +1,58 @@
-import axios from 'axios'
-import React, { useEffect, useState } from 'react'
-import { useAppContext } from '../../context/appContext';
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useAppContext } from "../../context/appContext";
 
 const Notifications = () => {
-
   const [data, setData] = useState([]);
-  const {userDetails} = useAppContext();
+  const { userDetails } = useAppContext();
 
-  console.log("Hi")
+  // console.log("Hi")
 
   useEffect(() => {
-    const fetchNotifications = async() => {
-      try{
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getNotifications`)
-        setData(res.data.data.filter((item) => item.userId == userDetails._id && item.status == true));
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/getNotifications`
+        );
+        setData(
+          res.data.data.filter(
+            (item) => item.userId == userDetails._id && item.status == true
+          )
+        );
+      } catch (error) {
+        console.log("Error fetching notifications", error);
       }
-      catch(error)
-      {
-        console.log("Error fetching notifications", error)
-      }
-    }
+    };
     fetchNotifications();
-  }, [])
-
+  }, []);
 
   return (
-    <div className='flex flex-col w-[50%] gap-8'>
-      {data ? data.map((item) => {
-        return (
-          <div className='flex p-8 rounded-2xl bg-[#BCEBD7] flex-col gap-4'>
-            <div className='flex items-center justify-between'>
-              <span className='text-[20px]'>Credit Granted</span>
-            </div>
-            <p className=' italic'>You have received <span className='font-bold'>100</span> credits.</p>
+    <div className="flex flex-col w-[50%] gap-8">
+      {data.length === 0 && (
+        <div className="flex p-8 rounded-2xl bg-[#BCEBD7] flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[20px]">No Notifications</span>
           </div>
-        )
-      }) : null}
+          <p className=" italic">You have no notifications.</p>
+        </div>
+      )}
+      {data
+        ? data.map((item) => {
+            return (
+              <div className="flex p-8 rounded-2xl bg-[#BCEBD7] flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[20px]">Credit Granted</span>
+                </div>
+                <p className=" italic">
+                  You have received <span className="font-bold">100</span>{" "}
+                  credits.
+                </p>
+              </div>
+            );
+          })
+        : null}
     </div>
-  )
-}
+  );
+};
 
-export default Notifications
+export default Notifications;

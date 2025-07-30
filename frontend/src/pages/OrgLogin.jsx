@@ -4,7 +4,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { useAppContext } from "../context/appContext";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
+import toast from "react-hot-toast";
 
 const OrgLogin = () => {
   const { setIsAuthenticated, orgDetails, setOrgDetails, setUserDetails } =
@@ -23,21 +23,15 @@ const OrgLogin = () => {
 
   const handleChange = (e) => {
     setData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
-    console.log(data);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      console.log("VITE_API_BASE_URL:", import.meta.env.VITE_API_BASE_URL);
-      console.log("All env vars:", import.meta.env);
-
       const url =
         type == "admin"
           ? `${import.meta.env.VITE_API_BASE_URL}/api/adminAuth`
           : `${import.meta.env.VITE_API_BASE_URL}/api/auth`;
-
-      console.log(url);
 
       const { data: res } = await axios.post(url, data);
 
@@ -45,16 +39,13 @@ const OrgLogin = () => {
 
       setIsAuthenticated(true);
 
-      console.log(res.data.user);
-
       if (!res.data) {
         return;
       }
 
       if (type == "admin") {
-        console.log(res.data.details);
         setOrgDetails(res.data.details);
-        toast(res.message);
+        toast.success(res.message);
         navigate("/orgDashboard");
       } else {
         if (res.data.user.firstLogin) {
@@ -62,9 +53,8 @@ const OrgLogin = () => {
           navigate("/onboarding");
           return;
         }
-        console.log(res.data.user);
         setUserDetails(res.data.user);
-        toast(res.message);
+        toast.success(res.message);
         navigate("/userDashboard");
       }
 
@@ -185,7 +175,6 @@ const OrgLogin = () => {
           </NavLink>
         </span>
       </motion.div>
-      <ToastContainer />
     </form>
   );
 };

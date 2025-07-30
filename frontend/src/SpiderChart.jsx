@@ -22,11 +22,9 @@ const SpiderChart = ({ testData }) => {
     }
   }, [testData]);
 
-  console.log(testData);
-
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
-      <ResponsiveContainer width="100%" height={400}>
+    <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
+      <ResponsiveContainer width="100%" height={300}>
         <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
           <PolarGrid radialLines={false} gridType="polygon" />
           <PolarAngleAxis
@@ -37,8 +35,8 @@ const SpiderChart = ({ testData }) => {
               let adjustedX = x || 0;
               let adjustedY = y || 0;
               let anchor = textAnchor || "middle";
-              let fontSize = "9px";
-              let offset = 25;
+              let fontSize = "8px";
+              let offset = 20;
 
               // Adjust position based on angle to prevent cutoff
               if (angle >= 45 && angle <= 135) {
@@ -51,7 +49,7 @@ const SpiderChart = ({ testData }) => {
                 anchor = "end";
                 // For longer labels on left, add more offset
                 if (payload?.value && payload.value.length > 8) {
-                  adjustedX = x - (offset + 15);
+                  adjustedX = x - (offset + 10);
                 }
               } else if (angle > 225 && angle <= 315) {
                 // Bottom - move down and center
@@ -63,7 +61,7 @@ const SpiderChart = ({ testData }) => {
                 anchor = "start";
                 // For longer labels on right, add more offset
                 if (payload?.value && payload.value.length > 8) {
-                  adjustedX = x + (offset + (-75));
+                  adjustedX = x + (offset + -50);
                 }
               }
 
@@ -105,7 +103,7 @@ const SpiderChart = ({ testData }) => {
                   y={y}
                   textAnchor="middle"
                   fill={fill}
-                  style={{ fontSize: "12px" }}
+                  style={{ fontSize: "10px" }}
                   className="font-semibold"
                 >
                   {label}

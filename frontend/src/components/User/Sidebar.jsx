@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { useAppContext } from "../../context/appContext";
+import toast from "react-hot-toast";
 import Logo2 from "../../assets/Logo2.png";
 
 const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
@@ -9,7 +10,7 @@ const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setIsAuthenticated(false);
-    alert("Logged out successfully");
+    toast.success("Logged out successfully");
   };
 
   const handleCloseSidebar = () => {
@@ -31,18 +32,18 @@ const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
       style={{ fontFamily: "Poppins" }}
       className="font-semibold w-[280px] sm:w-[305px] flex justify-between flex-col pr-[22.52px] pb-[20.03px] pl-[22.52px] pt-[20.03px] text-white bg-[#34856C] h-screen"
     >
-      <div className="flex space-y-[50px] flex-col">
+      <div className="flex space-y-[30px] sm:space-y-[50px] flex-col">
         {/* Header with Logo and Close Button */}
         <div className="flex justify-between items-center">
           <img
-            className="w-[141px] h-[38px] text-white"
+            className="w-[120px] sm:w-[141px] h-[32px] sm:h-[38px] text-white"
             src={Logo2}
             alt="Logo"
           ></img>
-          {/* Close Button - Visible on all screen sizes */}
+          {/* Close Button - Visible on mobile, hidden on desktop */}
           <button
             onClick={handleCloseSidebar}
-            className="p-2 rounded-md hover:bg-white hover:bg-opacity-20 transition-colors"
+            className="lg:hidden p-2 rounded-md hover:bg-gray-700 hover:bg-opacity-20 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -63,21 +64,21 @@ const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
 
         <button
           onClick={() => handleNavigation("home")}
-          className={`flex rounded-lg space-x-2 p-[7.51px] items-center ${
+          className={`flex rounded-lg space-x-2 p-[7.51px] items-center text-sm sm:text-base ${
             status == "home" ? "bg-[white] text-black " : null
           }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-house-icon lucide-house"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-house-icon lucide-house"
           >
             <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
             <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -86,7 +87,7 @@ const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
         </button>
         <button
           onClick={() => handleNavigation("profile")}
-          className={`flex rounded-lg space-x-2 p-[7.51px] items-center ${
+          className={`flex rounded-lg space-x-2 p-[7.51px] items-center text-sm sm:text-base ${
             status == "profile" || status == "addUser" || status == "editUser"
               ? "bg-[white] text-black "
               : null
@@ -94,15 +95,15 @@ const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="white"
             stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-users-icon lucide-users"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-users-icon lucide-users"
           >
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
@@ -113,21 +114,21 @@ const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
         </button>
         <button
           onClick={() => handleNavigation("activity")}
-          className={`flex rounded-lg space-x-2 p-[7.51px] items-center ${
+          className={`flex rounded-lg space-x-2 p-[7.51px] items-center text-sm sm:text-base ${
             status == "activity" ? "bg-[white] text-black " : null
           }`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-audio-lines-icon lucide-audio-lines"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-audio-lines-icon lucide-audio-lines"
           >
             <path d="M2 10v3" />
             <path d="M6 6v11" />
@@ -144,19 +145,19 @@ const Sidebar = ({ status, setStatus, setSidebarOpen }) => {
         <NavLink
           onClick={handleLogout}
           to={"/orgLogin"}
-          className="flex space-x-2 items=center"
+          className="flex space-x-2 items-center text-sm sm:text-base"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="white"
             stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-log-out-icon lucide-log-out"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="lucide lucide-log-out-icon lucide-log-out"
           >
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
