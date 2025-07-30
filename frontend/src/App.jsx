@@ -20,7 +20,7 @@ import OrgDashboard from "./pages/OrgDashboard";
 import OrgSignUp from "./pages/OrgSignUp";
 import OrgLogin from "./pages/OrgLogin";
 import UserDashboard from "./pages/UserDashboard";
-import ScrollProgressBar from "./components/ScrollProgressBar";
+
 
 
 const pageVariants = {
@@ -48,7 +48,7 @@ function App() {
 
   return (
     <>
-      <ScrollProgressBar />
+      
       <AnimatePresence mode = "wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Home/>} />

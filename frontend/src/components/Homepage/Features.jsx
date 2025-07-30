@@ -9,37 +9,42 @@ const Features = () => {
   return (
     <div className="w-full">
       <Hero className="top-0 z-0 sticky" />
-      <div className="h-[20px] sticky -top-8 z-10 rounded-t-2xl justify-center flex flex-col items-center p-2 bg-[#34856C]">
-        <div className="w-[50px] border-white text-white h-[0.5px] border-2"></div>
+      <div className=" h-[20px] sticky -top-8 z-10 rounded-t-2xl justify-center flex flex-col  items-center p-2 bg-[#34856C] ">
+        <div className=" w-[50px] border-white text-white h-[0.5px]  border-2 "></div>
       </div>
-      <div
-        id="Features"
-        className="bg-[#34856C] h-full space-x-2 text-[#F8FAFA]"
-      >
-        <div className="bg-[#34856C] sticky w-full z-0 -top-8 p-4 sm:p-6 lg:p-8">
-          <h1 className="font-poppins font-bold text-3xl sm:text-4xl md:text-5xl lg:text-[64px]">
+      <div id="Features" className="bg-[#34856C] h-full text-[#F8FAFA] ">
+        <div
+          className="bg-[#34856C] sticky w-full z-20 top-20 p-2 sm:p-2 lg:p-2"
+          style={{ fontFamily: "Poppins" }}
+        >
+          <h1 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[64px] text-center">
             Why Choose Shankh?
           </h1>
           <div className="border h-[1px] z-0 border-white"></div>
         </div>
-        <div className="h-[380svh] relative">
-          <div className="flex flex-col lg:flex-row h-[100vh] -top-6 items-start z-10 p-4 sm:p-6 lg:p-8 sticky bg-[#34856C] justify-between">
-            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold mb-4 lg:mb-0">
+        <div className="h-[400svh] relative ">
+          <div className="flex min-h-[60vh] sm:min-h-[80vh] lg:min-h-[90vh] items-start z-10 p-4 sm:p-6 lg:p-8 sticky top-16 sm:top-20 lg:top-34 bg-[#34856C] justify-between">
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold">
               1.
             </span>
-            <div className="space-y-6 lg:space-y-8 w-full lg:w-[80%]">
-              <div className="font-poppins flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] w-full lg:w-[736px] font-semibold">
+            <div className="space-y-2 sm:space-y-4 lg:space-y-4 w-[80%]">
+              <div
+                style={{ fontFamily: "Poppins" }}
+                className="flex items-center justify-between gap-4 sm:gap-6"
+              >
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[48px] w-full font-semibold">
                   AI-Driven Speech Analysis
                 </h1>
                 <img
-                  className="w-16 h-16 sm:w-20 sm:h-20 lg:w-auto lg:h-auto"
                   src={point1}
-                  alt="AI Speech Analysis"
-                />
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 flex-shrink-0"
+                ></img>
               </div>
-              <div className="font-inter z-10 space-y-6 lg:space-y-8 relative">
-                <p className="text-base sm:text-lg md:text-xl lg:text-[24px] w-full lg:w-[736px]">
+              <div
+                style={{ fontFamily: "Inter" }}
+                className="z-10 space-y-3 sm:space-y-4 lg:space-y-5 relative"
+              >
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px] w-full">
                   Gain instant, accurate feedback on every aspect of your verbal
                   communication. Our advanced AI technology analyzes
                   pronunciation, articulation, tone, pace, fluency, and speech
@@ -48,43 +53,48 @@ const Features = () => {
                 </p>
 
                 <div className="space-y-2">
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>01</span>
                     <span className="font-bold">Real-time Feedback</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>02</span>
-                    <span className="font-bold">Comprehensive Analysis</span>
+                    <span className="font-bold ">Comprehensive Analysis</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>03</span>
                     <span className="font-bold">Personalized Insights</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="border z-20 sticky top-[75px] border-white"></div>
-          <div className="flex flex-col lg:flex-row h-[90vh] items-start p-4 sm:p-6 lg:pl-8 lg:pr-8 z-20 sticky top-[81px] justify-between bg-[#34856C]">
-            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold mb-4 lg:mb-0">
+          <div className="border z-20 border-white"></div>
+          <div className="flex min-h-[60vh] sm:min-h-[80vh] lg:min-h-[90vh] items-start pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-8 lg:pr-8 z-20 sticky top-16 sm:top-20 lg:top-42 justify-between bg-[#34856C] ">
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold">
               2.
             </span>
-            <div className="space-y-6 lg:space-y-8 w-full lg:w-[80%]">
-              <div className="font-poppins flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] leading-tight w-full lg:w-[809px] font-semibold">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4 w-[80%]">
+              <div
+                style={{ fontFamily: "Poppins" }}
+                className="flex items-center justify-between gap-4 sm:gap-6"
+              >
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[42px] leading-tight w-full font-semibold">
                   Emotionally Intelligent Feedback
                 </h1>
                 <img
-                  className="w-16 h-16 sm:w-20 sm:h-20 lg:w-auto lg:h-auto"
                   src={point2}
-                  alt="Emotional Intelligence"
-                />
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 flex-shrink-0"
+                ></img>
               </div>
-              <div className="font-inter z-10 space-y-6 lg:space-y-8 relative">
-                <p className="text-base sm:text-lg md:text-xl lg:text-[24px] w-full lg:w-[809px]">
+              <div
+                style={{ fontFamily: "Inter" }}
+                className="z-10 space-y-3 sm:space-y-4 lg:space-y-5 relative"
+              >
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px] w-full">
                   Experience feedback that builds confidence rather than
                   criticism. Our AI delivers encouraging, constructive insights
                   that help refine both your speech delivery and
@@ -93,43 +103,48 @@ const Features = () => {
                 </p>
 
                 <div className="space-y-2">
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>01</span>
                     <span className="font-bold">Supportive Guidance</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>02</span>
-                    <span className="font-bold">Confidence Building</span>
+                    <span className="font-bold ">Confidence Building</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>03</span>
                     <span className="font-bold">Adaptive Coaching</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="border sticky top-[160px] z-30 border-white"></div>
-          <div className="flex flex-col lg:flex-row h-[80vh] items-start p-4 sm:p-6 lg:pl-8 lg:pr-8 justify-between bg-[#34856C] sticky top-[172px] z-30">
-            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold mb-4 lg:mb-0">
+          <div className="border z-30 border-white"></div>
+          <div className="flex min-h-[60vh] sm:min-h-[80vh] lg:min-h-[90vh] items-start pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-8 lg:pr-8 justify-between bg-[#34856C] sticky top-16 sm:top-20 lg:top-42 z-30">
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold">
               3.
             </span>
-            <div className="space-y-6 lg:space-y-8 w-full lg:w-[80%]">
-              <div className="font-poppins flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] w-full lg:w-[1300px] leading-12 font-semibold">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4 w-[80%]">
+              <div
+                style={{ fontFamily: "Poppins" }}
+                className="flex items-center justify-between gap-4 sm:gap-6"
+              >
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[48px] leading-12 w-full font-semibold">
                   Leadership & Communication Workshops
                 </h1>
                 <img
-                  className="w-16 h-16 sm:w-20 sm:h-20 lg:w-auto lg:h-auto"
                   src={point3}
-                  alt="Leadership Workshops"
-                />
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 flex-shrink-0"
+                ></img>
               </div>
-              <div className="font-inter space-y-6 lg:space-y-8 relative">
-                <p className="text-base sm:text-lg md:text-xl lg:text-[24px] w-full lg:w-[809px]">
+              <div
+                style={{ fontFamily: "Inter" }}
+                className="space-y-3 sm:space-y-4 lg:space-y-5 relative"
+              >
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px] w-full">
                   Elevate your professional presence through specialized
                   training modules. Develop executive presence, master
                   persuasion techniques, and craft impactful communication
@@ -137,17 +152,17 @@ const Features = () => {
                 </p>
 
                 <div className="space-y-2">
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>01</span>
                     <span className="font-bold">Executive Presence</span>
                   </div>
-                  <div className="border-1 border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1  border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>02</span>
-                    <span className="font-bold">Persuasion Techniques</span>
+                    <span className="font-bold ">Persuasion Techniques</span>
                   </div>
-                  <div className="border-1 border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1  border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>03</span>
                     <span className="font-bold">Strategic Communication</span>
                   </div>
@@ -156,18 +171,29 @@ const Features = () => {
             </div>
           </div>
 
-          <div className="border sticky top-[250px] z-40 border-white"></div>
-          <div className="flex flex-col lg:flex-row h-[100vh] items-start p-4 sm:p-6 lg:pl-8 lg:pr-8 justify-between bg-[#34856C] sticky top-[260px] z-40">
-            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold mb-4 lg:mb-0">4.</span>
-            <div className="space-y-6 lg:space-y-4 w-full lg:w-[80%]">
-              <div className="font-poppins flex flex-col lg:flex-row items-start lg:items-center justify-between space-y-4 lg:space-y-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] w-full lg:w-[636px] font-semibold">
+          <div className="border z-40 border-white"></div>
+          <div className="flex min-h-[60vh] sm:min-h-[80vh] lg:min-h-[90vh] items-start pl-4 pr-4 sm:pl-6 sm:pr-6 lg:pl-8 lg:pr-8 justify-between bg-[#34856C] sticky top-16 sm:top-20 lg:top-42 z-40">
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-[48px] font-bold">
+              4.
+            </span>
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4 w-[80%]">
+              <div
+                style={{ fontFamily: "Poppins" }}
+                className="flex items-center justify-between gap-4 sm:gap-6"
+              >
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-[48px] w-full font-semibold">
                   Multi-Language Support
                 </h1>
-                <img className="w-16 h-16 sm:w-20 sm:h-20 lg:w-auto lg:h-auto" src={point4} alt="Multi-Language Support" />
+                <img
+                  src={point4}
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 flex-shrink-0"
+                />
               </div>
-              <div className="font-inter space-y-6 lg:space-y-8 relative">
-                <p className="text-base sm:text-lg md:text-xl lg:text-[24px] w-full lg:w-[636px]">
+              <div
+                style={{ fontFamily: "Inter" }}
+                className="space-y-3 sm:space-y-4 lg:space-y-5 relative"
+              >
+                <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px] w-full">
                   Break through language barriers with comprehensive
                   multilingual coaching. Our platform helps you improve speech
                   clarity and communication across multiple languages, with
@@ -175,21 +201,21 @@ const Features = () => {
                   needs.
                 </p>
                 <div className="space-y-2">
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>01</span>
                     <span className="font-bold">Language Inclusivity</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>02</span>
-                    <span className="font-bold">Global Communication</span>
+                    <span className="font-bold ">Global Communication</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
-                  <div className="flex space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-[24px]">
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className="space-x-2 sm:space-x-4 text-sm sm:text-base md:text-lg lg:text-xl xl:text-[24px]">
                     <span>03</span>
                     <span className="font-bold">Regional Customization</span>
                   </div>
-                  <div className="border-1 content-extralight border-[#F8FAFA]"></div>
+                  <div className=" border-1 content-extralight border-[#F8FAFA]"></div>
                 </div>
               </div>
             </div>

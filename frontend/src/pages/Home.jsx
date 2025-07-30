@@ -10,6 +10,7 @@ import Clients from "../components/Homepage/Clients";
 import ContactUs from "../components/Homepage/ContactUs";
 import { useRef, useEffect, useState } from "react";
 import { useMotionValueEvent, useScroll, useTransform } from "framer-motion";
+import ScrollProgressBar from "./../components/ScrollProgressBar";
 
 const Home = () => {
   const [pos, setPos] = useState(0);
@@ -26,22 +27,25 @@ const Home = () => {
 
   return (
     <div className="h-screen scroll-smooth">
+      <ScrollProgressBar />
       <Navbar />
 
-      <section className="min-h-screen pt-16 lg:pt-20">
+      <section className="min-h-screen pt-20 lg:pt-24">
         <Features />
         <Services />
       </section>
 
       <section className="min-h-screen">
         <AboutUs />
+        {/* Small spacer to prevent overlap */}
+        <div className="h-16 sm:h-20 lg:h-0"></div>
         <Testimonials />
         <div className="h-[20px] sticky top-0 z-10 flex items-center justify-center bg-[#34856C] rounded-t-2xl">
           <div className="w-[50px] border-white h-[0.5px] border-2"></div>
         </div>
         <ContactUs />
-        {/* <Blogs /> */}
       </section>
+      {/* <Blogs /> */}
 
       {/* <section className="min-h-screen">
         <Clients />

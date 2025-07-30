@@ -38,7 +38,7 @@ const Navbar = () => {
         isScrolled ? "bg-white/95 backdrop-blur-md shadow-lg" : "bg-white"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <div className="flex-shrink-0">
@@ -108,7 +108,9 @@ const Navbar = () => {
         {/* Mobile Navigation */}
         <div
           className={`lg:hidden transition-all duration-300 ease-in-out transform ${
-            isMenuOpen ? "max-h-96 opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"
+            isMenuOpen
+              ? "max-h-96 opacity-100 translate-y-0"
+              : "max-h-0 opacity-0 -translate-y-2"
           } overflow-hidden`}
         >
           <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-100">

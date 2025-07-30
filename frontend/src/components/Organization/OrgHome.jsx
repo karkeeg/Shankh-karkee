@@ -164,14 +164,18 @@ const OrgHome = ({language, startDate, endDate, setStatus}) => {
         <Chart testData = {data} />
         <div  className='bg-white space-y-2 brightness-100 rounded-lg drop-shadow-lg w-full pl-[24px] pt-[16px] pr-[24px] pb-[16px]'>
             <h1 style={{fontFamily : "Poppins"}} className='text-[20px] font-semibold'>Performance across Key Parameters</h1>
-            <div style={{fontFamily : "Inter"}} className='grid grid-cols-2 gap-8 text-[18px]'>
-                <div className='shadow-lg rounded-lg p-[20px] w-full'>
-                    <h3 className='font-semibold'>Voice Insights :<span className='font-medium'> The Mechanics of Impactful Speech</span></h3>
-                    <SpiderChart testData = {voiceAverages} />
+            <div style={{fontFamily : "Inter"}} className='grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 text-[18px]'>
+                <div className='shadow-lg rounded-lg p-4 lg:p-[20px] w-full min-h-[400px] flex flex-col'>
+                    <h3 className='font-semibold mb-4'>Voice Insights :<span className='font-medium'> The Mechanics of Impactful Speech</span></h3>
+                    <div className='flex-1 flex items-center justify-center'>
+                        <SpiderChart testData = {voiceAverages} />
+                    </div>
                 </div>
-                <div className='shadow-lg rounded-lg p-[20px] w-full'>
-                    <h3 className='font-semibold'>Behavior Insights :<span className='font-medium'> The Psychology of your voice</span></h3>
-                    <SpiderChart testData = {behaviorAverages} />
+                <div className='shadow-lg rounded-lg p-4 lg:p-[20px] w-full min-h-[400px] flex flex-col'>
+                    <h3 className='font-semibold mb-4'>Behavior Insights :<span className='font-medium'> The Psychology of your voice</span></h3>
+                    <div className='flex-1 flex items-center justify-center'>
+                        <SpiderChart testData = {behaviorAverages} />
+                    </div>
                 </div>
             </div>
         </div>
