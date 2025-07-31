@@ -56,7 +56,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
       )
     );
 
-    console.log("data", data);
+    // console.log("data", data);
   }, [language, startDate, endDate]);
 
   useEffect(() => {
@@ -128,7 +128,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     setStatus("results");
   };
 
-  console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+  // console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
 
   return (
     <div className="bg-[#E7F0F0] h-[89svh] w-full overflow-x-hidden p-2 overflow-y-scroll">

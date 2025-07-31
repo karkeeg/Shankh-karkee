@@ -6,9 +6,10 @@ import Loader from "../User/Loader";
 import axios from "axios";
 import Onboarding1 from "./Onboarding1";
 import Results from "../User/Results";
+import toast from "react-hot-toast";
 
 const Onboarding9 = () => {
-  const { userDetails, setSelectedTest, setTranscript, setUserDetails } =
+  const { userDetails, setSelectedTest, setTranscript, setUserDetails, setPage } =
     useAppContext();
 
   const [resultOut, setResultOut] = useState(false);
@@ -18,6 +19,17 @@ const Onboarding9 = () => {
   const [audioFile, setAudioFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [recordedChunks, setRecordedChunks] = useState([]);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Handle window resize for ReactMic responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     let timer;
@@ -132,7 +144,6 @@ const Onboarding9 = () => {
           engagement: response.data.ves["ves"],
         },
         fillerWordsUsed: response.data.filler_words.total_fillers,
-        // Add detailed filler words data
         fillerWordsDetails: {
           counts: response.data.filler_words.filler_counts,
           totalFillers: response.data.filler_words.total_fillers,
@@ -156,7 +167,6 @@ const Onboarding9 = () => {
       setSelectedTest(res.data.data);
       console.log(response);
       setResultOut(true);
-      setIsLoading(false);
     } catch (error) {
       console.error(
         "Transcription error:",
@@ -186,51 +196,78 @@ const Onboarding9 = () => {
   console.log(audioFile);
 
   return (
-    <div className=" flex flex-col items-center  p-8 h-[75svh] w-full space-y-4">
+    <div className="flex flex-col items-center p-4 sm:p-6 lg:p-8 h-[75svh] w-full space-y-4">
       {!resultOut && isLoading == false ? (
-        <div className="flex w-[1007px] items-start text-start flex-col space-y-[45px] justify-center ">
-          <div className="rounded-2xl w-[1007px]  text-center shadow-md space-y-[42px] pb-[29px] pr-[24px] pt-[29px] pl-[24px] flex flex-col bg-white">
+        <div className="flex w-full max-w-[1007px] items-start text-start flex-col space-y-[20px] sm:space-y-[30px] lg:space-y-[45px] justify-center">
+          <div className="rounded-2xl w-full max-w-[1007px] text-center shadow-md space-y-[20px] sm:space-y-[30px] lg:space-y-[42px] pb-[20px] sm:pb-[25px] lg:pb-[29px] pr-[15px] sm:pr-[20px] lg:pr-[24px] pt-[20px] sm:pt-[25px] lg:pt-[29px] pl-[15px] sm:pl-[20px] lg:pl-[24px] flex flex-col bg-white">
             <h1
               style={{ fontFamily: "Poppins" }}
-              className="text-[#34856C] leading-10 text-[32px] font-semibold"
+              className="text-[#34856C] leading-tight sm:leading-8 lg:leading-10 text-[20px] sm:text-[24px] lg:text-[32px] font-semibold break-words"
             >
-              Speak on any topic for <span className="text-[#FF6B5B]">30</span>{" "}
-              sec{" "}
+              Speak on any topic for{" "}
+              <span className="text-[#FF6B5B] whitespace-nowrap">30 sec</span>
             </h1>
             <p
               style={{ fontFamily: "Inter" }}
-              className="text-[18px] text-[#5F6C7B]"
+              className="text-[14px] sm:text-[16px] lg:text-[18px] text-[#5F6C7B] px-2 sm:px-4 lg:px-0 break-words leading-relaxed"
             >
-              Suggestion: What was the most memorable incident that happened in
-              this month?
+              Suggestion: What was the most memorable incident that happened in this month?
             </p>
+            
+            {/* Recording Container - Made Responsive */}
             <div
               style={{ fontFamily: "Inter" }}
-              className="flex text-[18px] justify-between h-[155px] border-[1px] rounded-lg border-[#D9E0E6] pl-[40px] pr-[40px] pt-[20px] pb-[20px]  items-center"
+              className="flex flex-col sm:flex-row text-[14px] sm:text-[16px] lg:text-[18px] justify-between min-h-[200px] sm:h-[180px] lg:h-[155px] border-[1px] rounded-lg border-[#D9E0E6] p-[15px] sm:p-[20px] lg:p-[40px] items-center space-y-4 sm:space-y-0"
             >
-              <span>{`0 :  ${seconds}`}</span>
-              <div>
-                <ReactMic record={isRecording} onStop={handleAudioSave} />
+              {/* Timer */}
+              <div className='flex flex-col items-center sm:items-start'>
+                <span className='text-[20px] sm:text-[24px] lg:text-[28px] font-bold text-[#34856C] whitespace-nowrap'>{`0 : ${seconds.toString().padStart(2, '0')}`}</span>
+                <span className='text-[12px] sm:text-[14px] text-gray-500 mt-1'>Timer</span>
+              </div>
+              
+              {/* Recording Controls */}
+              <div className='flex flex-col items-center space-y-3'>
+                {/* ReactMic Container - Made Responsive */}
+                <div className='w-full max-w-[200px] sm:max-w-[250px] lg:max-w-[300px]'>
+                  <ReactMic
+                    record={isRecording}
+                    onStop={handleAudioSave}
+                    className="w-full h-auto"
+                    strokeColor="#34856C"
+                    backgroundColor="#f8f9fa"
+                    width={windowWidth < 640 ? 200 : windowWidth < 1024 ? 250 : 300}
+                    height={windowWidth < 640 ? 60 : windowWidth < 1024 ? 80 : 100}
+                  />
+                </div>
+                
+                {/* Recording Button */}
                 <button
                   onClick={() => setIsRecording((prev) => !prev)}
                   disabled={seconds === 0}
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                  className='bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-3 rounded-lg text-[14px] sm:text-[16px] font-semibold transition-colors min-w-[100px] sm:min-w-[120px] whitespace-nowrap'
                 >
-                  {isRecording ? "Stop" : "Start"}{" "}
+                  {isRecording ? "Stop" : "Start"}
                 </button>
               </div>
-              <button
-                onClick={handleReset}
-                className="bg-red-500 text-white px-4 py-2 rounded-lg"
-              >
-                Reset
-              </button>
+              
+              {/* Reset Button */}
+              <div className='flex flex-col items-center sm:items-end'>
+                <button
+                  onClick={handleReset}
+                  className='bg-red-500 hover:bg-red-600 text-white px-4 sm:px-6 lg:px-8 py-2 sm:py-3 rounded-lg text-[14px] sm:text-[16px] font-semibold transition-colors min-w-[100px] sm:min-w-[120px] whitespace-nowrap'
+                >
+                  Reset
+                </button>
+                <span className='text-[12px] sm:text-[14px] text-gray-500 mt-1 text-center'>Clear Recording</span>
+              </div>
             </div>
           </div>
-          <div className="text-center w-full items-center">
+          
+          {/* Submit Button */}
+          <div className="text-center w-full flex justify-center">
             <button
               style={{ fontFamily: "Poppins" }}
-              className="bg-[#FF6B5B] text-white text-[20px] font-semibold w-[287px] pt-[10px] pl-[53px] pb-[10px] rounded-lg pr-[53px]"
+              className="bg-[#FF6B5B] hover:bg-[#e55a4a] text-white text-[16px] sm:text-[18px] lg:text-[20px] font-semibold w-full max-w-[287px] pt-[10px] pb-[10px] pl-[20px] sm:pl-[30px] lg:pl-[53px] pr-[20px] sm:pr-[30px] lg:pr-[53px] rounded-lg transition-colors whitespace-nowrap"
               onClick={handleSubmit}
             >
               Take Assessment
@@ -240,11 +277,11 @@ const Onboarding9 = () => {
       ) : !resultOut && isLoading ? (
         <Loader isLoading={isLoading} />
       ) : (
-        <div className="flex flex-col gap-4 items-center">
+        <div className="flex flex-col gap-4 items-center w-full max-w-[600px]">
           <Results />
           <NavLink
             style={{ fontFamily: "Poppins" }}
-            className="bg-[#FF6B5B] text-white text-[18px] w-[149px] pt-[10px] pl-[53px] pb-[10px] rounded-lg pr-[53px]"
+            className="bg-[#FF6B5B] hover:bg-[#e55a4a] text-white text-[16px] sm:text-[18px] w-full max-w-[149px] pt-[10px] pb-[10px] pl-[20px] sm:pl-[30px] lg:pl-[53px] pr-[20px] sm:pr-[30px] lg:pr-[53px] rounded-lg transition-colors whitespace-nowrap"
             onClick={() => setPage((prev) => prev + 1)}
             to={"/userDashboard"}
           >

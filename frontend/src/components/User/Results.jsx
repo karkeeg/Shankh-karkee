@@ -7,6 +7,18 @@ import jsPDF from "jspdf";
 const Results = () => {
   const { userDetails, transcript, selectedTest } = useAppContext();
 
+  // Add null checks to prevent errors when selectedTest is empty
+  if (!selectedTest || !selectedTest.voiceInsights || !selectedTest.behaviorInsights) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 h-[75svh] w-full">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">No Test Data Available</h2>
+          <p className="text-gray-500">Please complete a voice assessment to view results.</p>
+        </div>
+      </div>
+    );
+  }
+
   
 
   const page1Ref = useRef();
