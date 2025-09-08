@@ -31,9 +31,9 @@ const Notifications = () => {
       {data.length === 0 && (
         <div className="flex p-8 rounded-2xl bg-[#BCEBD7] flex-col gap-4">
           <div className="flex items-center justify-between">
-            <span className="text-[20px]">No Notifications</span>
+            <span className="text-[20px]">No Notification</span>
           </div>
-          <p className=" italic">You have no notifications.</p>
+          <p className=" italic">You have no notification.</p>
         </div>
       )}
       {data

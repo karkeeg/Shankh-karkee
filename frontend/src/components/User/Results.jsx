@@ -8,18 +8,24 @@ const Results = () => {
   const { userDetails, transcript, selectedTest } = useAppContext();
 
   // Add null checks to prevent errors when selectedTest is empty
-  if (!selectedTest || !selectedTest.voiceInsights || !selectedTest.behaviorInsights) {
+  if (
+    !selectedTest ||
+    !selectedTest.voiceInsights ||
+    !selectedTest.behaviorInsights
+  ) {
     return (
       <div className="flex flex-col items-center justify-center p-8 h-[75svh] w-full">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">No Test Data Available</h2>
-          <p className="text-gray-500">Please complete a voice assessment to view results.</p>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+            No Test Data Available
+          </h2>
+          <p className="text-gray-500">
+            Please complete a voice assessment to view result.
+          </p>
         </div>
       </div>
     );
   }
-
-  
 
   const page1Ref = useRef();
   const page2Ref = useRef();
@@ -760,8 +766,6 @@ const Results = () => {
       `shankh-assessment-${userDetails.userName}-${selectedTest.date}.pdf`
     );
   };
-
-
 
   return (
     <div className="pl-4 sm:pl-[20px] space-y-4 h-[88svh] overflow-y-scroll w-full bg-[#F8FAFA] pr-4 sm:pr-[20px] pt-[32px] pb-[20px]">
