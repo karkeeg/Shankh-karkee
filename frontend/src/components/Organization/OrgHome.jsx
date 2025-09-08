@@ -77,24 +77,29 @@ const OrgHome = ({language, startDate, endDate, setStatus}) => {
         "Tone Modulation": 0,
         "Filler Words": 0,
       };
-    data.forEach(test => {
-        newVoiceAverages["Fluency"] += test.voiceInsights.fluency;
-        newVoiceAverages["Clarity"] += test.voiceInsights.clarity;
-        newVoiceAverages["Tone Modulation"] += test.voiceInsights.toneModulation;
-        newVoiceAverages["Filler Words"] += test.voiceInsights.fillerWords;
-        newBehaviorAverages["Emotional Regulation"] += test.behaviorInsights.emotionalRegulation;
-        newBehaviorAverages["Confidence and Presence"] += test.behaviorInsights.confidenceAndPresence;
-        newBehaviorAverages["Pacing and Pauses"] += test.behaviorInsights.pacingAndPauses;
-        newBehaviorAverages["Engagement"] += test.behaviorInsights.engagement;
-        
-    });
-    Object.keys(newVoiceAverages).forEach(key => {
-        newVoiceAverages[key] = Math.floor(newVoiceAverages[key]/data.length);
-    });
-    Object.keys(newBehaviorAverages).forEach(key => {
-        newBehaviorAverages[key] = Math.floor(newBehaviorAverages[key]/data.length);
-    });
 
+    if (data && data.length > 0) {
+      data.forEach(test => {
+          newVoiceAverages["Fluency"] += test.voiceInsights?.fluency || 0;
+          newVoiceAverages["Clarity"] += test.voiceInsights?.clarity || 0;
+          newVoiceAverages["Tone Modulation"] += test.voiceInsights?.toneModulation || 0;
+          newVoiceAverages["Filler Words"] += test.voiceInsights?.fillerWords || 0;
+          
+          newBehaviorAverages["Emotional Regulation"] += test.behaviorInsights?.emotionalRegulation || 0;
+          newBehaviorAverages["Confidence and Presence"] += test.behaviorInsights?.confidenceAndPresence || 0;
+          newBehaviorAverages["Pacing and Pauses"] += test.behaviorInsights?.pacingAndPauses || 0;
+          newBehaviorAverages["Engagement"] += test.behaviorInsights?.engagement || 0;
+      });
+
+      // Calculate averages only if we have data
+      Object.keys(newVoiceAverages).forEach(key => {
+          newVoiceAverages[key] = Math.floor(newVoiceAverages[key] / data.length) || 0;
+      });
+      
+      Object.keys(newBehaviorAverages).forEach(key => {
+          newBehaviorAverages[key] = Math.floor(newBehaviorAverages[key] / data.length) || 0;
+      });
+    }
     setBehaviorAverages(newBehaviorAverages);
     setVoiceAverages(newVoiceAverages);
   }, [data])
