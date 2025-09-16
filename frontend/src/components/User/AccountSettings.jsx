@@ -63,25 +63,25 @@ const AccountSettings = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-[#F8FAFA] overflow-y-scroll p-4 sm:p-8 h-[89svh] w-full space-y-8"
+      className="bg-[#F8FAFA] overflow-y-scroll p-3 sm:p-4 lg:p-8 h-[89svh] w-full space-y-4 sm:space-y-6 lg:space-y-8"
     >
       <h1
         style={{ fontFamily: "Poppins" }}
-        className="font-semibold text-2xl sm:text-[32px]"
+        className="font-semibold text-xl sm:text-2xl lg:text-[32px]"
       >
         Account Settings
       </h1>
 
-      <div className="p-4 sm:p-[40px] space-y-[30px] bg-white rounded-lg">
+      <div className="p-4 sm:p-6 lg:p-[40px] space-y-6 sm:space-y-8 lg:space-y-[30px] bg-white rounded-lg">
         <div
           style={{ fontFamily: "Poppins" }}
           className="font-semibold flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4"
         >
           <button
             type="button"
-            className={`p-2 ${
+            className={`p-2 sm:p-3 text-sm sm:text-base ${
               active == "changePass"
-                ? "border-b-3 border-[#34856C] text-[#34856C]"
+                ? "border-b-2 sm:border-b-3 border-[#34856C] text-[#34856C]"
                 : null
             }`}
             onClick={() => setActive("changePass")}
@@ -90,9 +90,9 @@ const AccountSettings = () => {
           </button>
           <button
             type="button"
-            className={`p-2 ${
+            className={`p-2 sm:p-3 text-sm sm:text-base ${
               active == "notifications"
-                ? "border-b-3 border-[#34856C] text-[#34856C]"
+                ? "border-b-2 sm:border-b-3 border-[#34856C] text-[#34856C]"
                 : null
             }`}
             onClick={() => setActive("notifications")}
@@ -102,54 +102,59 @@ const AccountSettings = () => {
         </div>
         <div>
           {active === "changePass" ? (
-            <div style={{ fontFamily: "Inter" }} className="space-y-[30px]">
-              <div className="space-y-1 text-[14px]">
+            <div
+              style={{ fontFamily: "Inter" }}
+              className="space-y-6 sm:space-y-8 lg:space-y-[30px]"
+            >
+              <div className="space-y-1 sm:space-y-2 text-sm sm:text-[14px]">
                 <h3 className="font-semibold">Current Password</h3>
                 <input
                   onChange={handleChange}
                   id="oldPassword"
                   value={data.oldPassword}
-                  className="border-[1px] rounded-md focus:outline-none w-full p-2"
+                  className="border-[1px] rounded-md focus:outline-none focus:ring-2 focus:ring-[#34856C] focus:border-transparent w-full p-2 sm:p-3 text-sm sm:text-base"
                   placeholder="Enter current password"
                   type="password"
                 />
               </div>
 
-              <div className="space-y-1 text-[14px]">
+              <div className="space-y-1 sm:space-y-2 text-sm sm:text-[14px]">
                 <h3 className="font-semibold">New Password</h3>
                 <input
                   onChange={handleChange}
                   id="newPassword"
                   value={data.newPassword}
-                  className="border-[1px] rounded-md focus:outline-none w-full p-2"
+                  className="border-[1px] rounded-md focus:outline-none focus:ring-2 focus:ring-[#34856C] focus:border-transparent w-full p-2 sm:p-3 text-sm sm:text-base"
                   placeholder="Enter new password"
                   type="password"
                 />
               </div>
 
-              <div className="space-y-1 text-[14px]">
+              <div className="space-y-1 sm:space-y-2 text-sm sm:text-[14px]">
                 <h3 className="font-semibold">Confirm new password</h3>
                 <input
                   onChange={handleChange}
                   id="confirmPassword"
                   value={data.confirmPassword}
-                  className="border-[1px] rounded-md focus:outline-none w-full p-2"
+                  className="border-[1px] rounded-md focus:outline-none focus:ring-2 focus:ring-[#34856C] focus:border-transparent w-full p-2 sm:p-3 text-sm sm:text-base"
                   placeholder="Confirm new password"
                   type="password"
                 />
               </div>
 
-              <div className="font-semibold grid space-x-[25px]">
-                <span
-                  style={{ fontFamily: "Poppins" }}
-                  className="text-xs text-red-600"
-                >
-                  {error}
-                </span>
+              <div className="font-semibold flex flex-col space-y-3 sm:space-y-4">
+                {error && (
+                  <span
+                    style={{ fontFamily: "Poppins" }}
+                    className="text-xs sm:text-sm text-red-600"
+                  >
+                    {error}
+                  </span>
+                )}
                 <button
                   type="submit"
                   style={{ fontFamily: "Poppins" }}
-                  className="pt-[10px] pr-[53px] pb-[10px] pl-[53px] rounded-lg text-white bg-[#34856C]"
+                  className="w-full sm:w-auto py-2 sm:py-3 lg:pt-[10px] lg:pr-[53px] lg:pb-[10px] lg:pl-[53px] px-6 sm:px-12 lg:px-[53px] rounded-lg text-white bg-[#34856C] text-sm sm:text-base hover:bg-[#2d6b5a] transition-colors"
                 >
                   Update Password
                 </button>

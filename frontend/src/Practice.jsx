@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "./context/appContext";
-import { ReactMic } from "react-mic";
+// import { ReactMic } from "react-mic";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -148,7 +148,7 @@ const Practice = () => {
         >
           <span className="text-2xl font-bold">{`0 : ${seconds.toString().padStart(2, '0')}`}</span>
           <div className="flex flex-col items-center space-y-2">
-            <ReactMic record={isRecording} onStop={handleAudioSave} />
+            {/* <ReactMic record={isRecording} onStop={handleAudioSave} /> */}
             <button
               onClick={() => setIsRecording((prev) => !prev)}
               disabled={seconds === 0 || isLoading}

@@ -7,19 +7,32 @@ import jsPDF from "jspdf";
 const Results = () => {
   const { userDetails, transcript, selectedTest } = useAppContext();
 
+  console.log("fILLER value:", selectedTest.filler_words);
+  if (selectedTest.voiceInsights) {
+    console.log("Type of clarity:", typeof selectedTest.voiceInsights.clarity);
+  }
+
+  console;
+
   // Add null checks to prevent errors when selectedTest is empty
-  if (!selectedTest || !selectedTest.voiceInsights || !selectedTest.behaviorInsights) {
+  if (
+    !selectedTest ||
+    !selectedTest.voiceInsights ||
+    !selectedTest.behaviorInsights
+  ) {
     return (
       <div className="flex flex-col items-center justify-center p-8 h-[75svh] w-full">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-4">No Test Data Available</h2>
-          <p className="text-gray-500">Please complete a voice assessment to view results.</p>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-4">
+            No Test Data Available
+          </h2>
+          <p className="text-gray-500">
+            Please complete a voice assessment to view result.
+          </p>
         </div>
       </div>
     );
   }
-
-  
 
   const page1Ref = useRef();
   const page2Ref = useRef();
@@ -426,10 +439,10 @@ const Results = () => {
       ],
       [
         "Clarity",
-        `${Math.ceil(selectedTest.voiceInsights.clarity)}%`,
-        selectedTest.voiceInsights.clarity <= 39
+        `${Math.ceil(selectedTest.voiceInsights.clarity || 0)}%`,
+        (selectedTest.voiceInsights.clarity || 0) <= 39
           ? "Novice"
-          : selectedTest.voiceInsights.clarity <= 69
+          : (selectedTest.voiceInsights.clarity || 0) <= 69
           ? "Emerging"
           : "Proficient",
       ],
@@ -607,10 +620,10 @@ const Results = () => {
       ],
       [
         "Clarity",
-        `${Math.ceil(selectedTest.voiceInsights.clarity)}%`,
-        selectedTest.voiceInsights.clarity <= 39
+        `${Math.ceil(selectedTest.voiceInsights.clarity || 0)}%`,
+        (selectedTest.voiceInsights.clarity || 0) <= 39
           ? "Novice"
-          : selectedTest.voiceInsights.clarity <= 69
+          : (selectedTest.voiceInsights.clarity || 0) <= 69
           ? "Emerging"
           : "Proficient",
         "Clear and distinct pronunciation",
@@ -691,7 +704,10 @@ const Results = () => {
         "Practice speaking exercises to improve fluency and reduce hesitations"
       );
     }
-    if (selectedTest.voiceInsights.clarity <= 39) {
+    if (
+      selectedTest.voiceInsights.clarity &&
+      selectedTest.voiceInsights.clarity <= 39
+    ) {
       recommendations.push(
         "Focus on clear pronunciation and articulation exercises"
       );
@@ -760,8 +776,6 @@ const Results = () => {
       `shankh-assessment-${userDetails.userName}-${selectedTest.date}.pdf`
     );
   };
-
-
 
   return (
     <div className="pl-4 sm:pl-[20px] space-y-4 h-[88svh] overflow-y-scroll w-full bg-[#F8FAFA] pr-4 sm:pr-[20px] pt-[32px] pb-[20px]">
@@ -1014,31 +1028,37 @@ const Results = () => {
                 </div>
                 <span
                   className={`text-[16px] font-semibold ${
-                    selectedTest.voiceInsights.clarity <= 39
+                    (Number(selectedTest.voiceInsights.clarity) || 0) <= 39
                       ? "text-[#FF6B5B]"
-                      : selectedTest.voiceInsights.clarity <= 69
+                      : (Number(selectedTest.voiceInsights.clarity) || 0) <= 69
                       ? "text-[#F9A826]"
                       : "text-[#34856C]"
                   }`}
                 >
-                  {selectedTest.voiceInsights.clarity <= 39
+                  {(Number(selectedTest.voiceInsights.clarity) || 0) <= 39
                     ? "Novice"
-                    : selectedTest.voiceInsights.clarity <= 69
+                    : (Number(selectedTest.voiceInsights.clarity) || 0) <= 69
                     ? "Emerging"
                     : "Proficient"}
                 </span>
               </div>
               <div>
                 <span className="text-[24px] font-semibold">
-                  {Math.ceil(selectedTest.voiceInsights.clarity)}%
+                  {Math.ceil(Number(selectedTest.voiceInsights.clarity) || 0)}%
                 </span>
                 <div className="flex h-[10px] w-full rounded-l-full rounded-r-full bg-[#D9E0E6]">
                   <div
-                    style={{ width: `${selectedTest.voiceInsights.clarity}%` }}
+                    style={{
+                      width: `${Math.min(
+                        Number(selectedTest.voiceInsights.clarity) || 0,
+                        100
+                      )}%`,
+                    }}
                     className={`h-[10px] rounded-l-full rounded-r-full ${
-                      selectedTest.voiceInsights.clarity <= 39
+                      (Number(selectedTest.voiceInsights.clarity) || 0) <= 39
                         ? "bg-[#FF6B5B]"
-                        : selectedTest.voiceInsights.clarity <= 69
+                        : (Number(selectedTest.voiceInsights.clarity) || 0) <=
+                          69
                         ? "bg-[#F9A826]"
                         : "bg-[#34856C]"
                     }`}
@@ -1386,30 +1406,28 @@ const Results = () => {
             style={{ fontFamily: "Poppins" }}
             className="flex gap-4 sm:gap-12 text-center justify-center items-center bg-[#FFFBF5] pr-4 sm:pr-[80px] pb-[19px] pl-4 sm:pl-[80px] pt-[19px] flex-wrap"
           >
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#34856C] rounded-xl drop-shadow-lg">
-              um
-            </div>
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#F9A826] rounded-xl drop-shadow-lg">
-              like
-            </div>
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#FF6B5B] rounded-xl drop-shadow-lg">
-              you know
-            </div>
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#34856C] rounded-xl drop-shadow-lg">
-              basically
-            </div>
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#34856C] rounded-xl drop-shadow-lg">
-              uhh
-            </div>
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#F9A826] rounded-xl drop-shadow-lg">
-              um
-            </div>
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#34856C] rounded-xl drop-shadow-lg">
-              like
-            </div>
-            <div className="text-[20px] bg-white p-2 font-semibold text-[#FF6B5B] rounded-xl drop-shadow-lg">
-              uh
-            </div>
+            {selectedTest.voiceInsights.filler_words?.filler_counts ? (
+              Object.entries(
+                selectedTest.voiceInsights.filler_words.filler_counts
+              ).map(([word, count], index) => {
+                // Define colors to cycle through
+                const colors = ["#34856C", "#F9A826", "#FF6B5B"];
+                const color = colors[index % colors.length];
+
+                return (
+                  <div
+                    key={word}
+                    className="text-[20px] bg-white p-2 font-semibold rounded-xl drop-shadow-lg flex flex-col items-center"
+                    style={{ color }}
+                  >
+                    <span>{word}</span>
+                    <span className="text-sm text-gray-500">x{count}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-gray-500">No filler words detected</p>
+            )}
           </div>
         </div>
         <div className="bg-white brightness-100 space-y-8 rounded-lg shadow-lg w-full pl-[24px] pt-[16px] pr-[24px] pb-[16px]">

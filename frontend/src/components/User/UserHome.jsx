@@ -9,11 +9,18 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
   const { userDetails, setSelectedTest } = useAppContext();
   const [temp, setTemp] = useState([]);
   const [data, setData] = useState([]);
+
+  console.log(userDetails);
   const [viewAll, setViewAll] = useState(false);
 
   const [behaviorAverages, setBehaviorAverages] = useState({});
 
-  const [voiceAverages, setVoiceAverages] = useState({});
+  const [voiceAverages, setVoiceAverages] = useState({
+    Fluency: 0,
+    Clarity: 0,
+    "Tone Modulation": 0,
+    "Filler Words": 0,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,10 +28,16 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/getAllTests`
         );
-       
+        console.log(
+          res.data.data.filter((item) => item.userId !== userDetails._id)
+        );
 
-        setTemp(res.data.data.filter((item) => item.userId == userDetails._id));
-        setData(res.data.data.filter((item) => item.userId == userDetails._id));
+        setTemp(
+          res.data.data.filter((item) => item.userId !== userDetails._id)
+        );
+        setData(
+          res.data.data.filter((item) => item.userId !== userDetails._id)
+        );
       } catch (error) {
         console.error("Error fetching test data :", error);
       }
@@ -56,7 +69,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
       )
     );
 
-    // console.log("data", data);
+    console.log("data", data);
   }, [language, startDate, endDate]);
 
   useEffect(() => {
@@ -74,25 +87,33 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
       "Filler Words": 0,
     };
     data.forEach((test) => {
-      newVoiceAverages["Fluency"] += test.voiceInsights.fluency;
-      newVoiceAverages["Clarity"] += test.voiceInsights.clarity;
-      newVoiceAverages["Tone Modulation"] += test.voiceInsights.toneModulation;
-      newVoiceAverages["Filler Words"] += test.voiceInsights.fillerWords;
-      newBehaviorAverages["Emotional Regulation"] +=
-        test.behaviorInsights.emotionalRegulation;
-      newBehaviorAverages["Confidence and Presence"] +=
-        test.behaviorInsights.confidenceAndPresence;
-      newBehaviorAverages["Pacing and Pauses"] +=
-        test.behaviorInsights.pacingAndPauses;
-      newBehaviorAverages["Engagement"] += test.behaviorInsights.engagement;
+      if (test.voiceInsights) {
+        newVoiceAverages["Fluency"] += test.voiceInsights.fluency || 0;
+        newVoiceAverages["Clarity"] += test.voiceInsights.clarity || 0;
+        newVoiceAverages["Tone Modulation"] +=
+          test.voiceInsights.toneModulation || 0;
+        newVoiceAverages["Filler Words"] += test.voiceInsights.fillerWords || 0;
+      }
+      if (test.behaviorInsights) {
+        newBehaviorAverages["Emotional Regulation"] +=
+          test.behaviorInsights.emotionalRegulation || 0;
+        newBehaviorAverages["Confidence and Presence"] +=
+          test.behaviorInsights.confidenceAndPresence || 0;
+        newBehaviorAverages["Pacing and Pauses"] +=
+          test.behaviorInsights.pacingAndPauses || 0;
+        newBehaviorAverages["Engagement"] +=
+          test.behaviorInsights.engagement || 0;
+      }
     });
     Object.keys(newVoiceAverages).forEach((key) => {
-      newVoiceAverages[key] = Math.floor(newVoiceAverages[key] / data.length);
+      newVoiceAverages[key] =
+        data.length > 0 ? Math.floor(newVoiceAverages[key] / data.length) : 0;
     });
     Object.keys(newBehaviorAverages).forEach((key) => {
-      newBehaviorAverages[key] = Math.floor(
-        newBehaviorAverages[key] / data.length
-      );
+      newBehaviorAverages[key] =
+        data.length > 0
+          ? Math.floor(newBehaviorAverages[key] / data.length)
+          : 0;
     });
 
     setBehaviorAverages(newBehaviorAverages);
@@ -124,26 +145,21 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     }, 0) / data.length || 0;
 
   const handleView = (item) => {
+    console.log("Selected test data:", JSON.stringify(item, null, 2));
+    console.log("Voice Insights:", item.voiceInsights);
+    console.log("Clarity value:", item.voiceInsights?.clarity);
     setSelectedTest(item);
     setStatus("results");
   };
 
-  // console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
-
   return (
-    <div className="bg-[#E7F0F0] h-[89svh] w-full overflow-x-hidden p-2 overflow-y-scroll">
-      <div className="bg-white w-full shadow-md p-4 rounded-lg space-y-[20px]">
-        <h3
-          style={{ fontFamily: "Poppins" }}
-          className="text-[20px] font-semibold"
-        >
+    <div className="bg-[#E7F0F0] min-h-[calc(100vh-80px)] w-full p-2 md:p-6 space-y-6 overflow-y-auto">
+      <div className="bg-white w-full shadow-md p-4 rounded-lg space-y-5">
+        <h3 className="font-['Poppins'] text-lg md:text-xl font-semibold">
           Here is summary of user scores
         </h3>
-        <div
-          style={{ fontFamily: "Poppins" }}
-          className="grid gap-4 p-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-        >
-          <div className="w-full drop-shadow-lg border-l-4 border-[#34856C] rounded-xl bg-white pl-[19px] pr-[32px] pt-[22px] h-[119px]">
+        <div className="grid gap-4 p-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="w-full drop-shadow-lg border-l-4 border-[#34856C] rounded-xl bg-white p-4 md:p-6 h-full min-h-[119px]">
             <Tooltip title="Total number of attempts by the user within the selected time period.">
               <div className="flex">
                 <span className="font-semibold text-[#5F6C7B] text-[16px]">
@@ -156,7 +172,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
             </Tooltip>
             <span className="text-[24px] font-semibold">{data.length}</span>
           </div>
-          <div className="w-full border-l-4 border-[#34856C] rounded-xl bg-white pl-[19px] pr-[32px] drop-shadow-lg pt-[22px] h-[119px]">
+          <div className="w-full border-l-4 border-[#34856C] rounded-xl bg-white p-4 md:p-6 drop-shadow-lg h-full min-h-[119px]">
             <Tooltip title="Average of all the scores of the user within the selected time period.">
               <div className="flex">
                 <span className="font-semibold text-[#5F6C7B] text-[16px]">
@@ -171,7 +187,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
               {Math.ceil(vocalAverage + behaviourAverage) / 2}%
             </span>
           </div>
-          <div className="w-full border-l-4 border-[#34856C] rounded-xl bg-white pl-[19px] pr-[32px] drop-shadow-lg pt-[22px] h-[119px]">
+          <div className="w-full border-l-4 border-[#34856C] rounded-xl bg-white p-4 md:p-6 drop-shadow-lg h-full min-h-[119px]">
             <Tooltip title="Shows the mean performance score across all vocal analysis parameters including tone, pace, clarity, and speech patterns">
               <div className="flex">
                 <span className="font-semibold text-[#5F6C7B] text-[16px]">
@@ -186,7 +202,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
               {Math.ceil(vocalAverage)}%
             </span>
           </div>
-          <div className="w-full border-l-4 border-[#34856C] rounded-xl bg-white pl-[19px] pr-[32px] drop-shadow-lg pt-[22px] h-[119px]">
+          <div className="w-full border-l-4 border-[#34856C] rounded-xl bg-white p-4 md:p-6 drop-shadow-lg h-full min-h-[119px]">
             <Tooltip title="Displays the average rating for behavioral assessment criteria such as confidence, engagement, body language, and presentation skills">
               <div className="flex">
                 <span className="font-semibold text-[#5F6C7B] text-[16px]">
@@ -203,18 +219,12 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
           </div>
         </div>
         <Chart testData={data} />
-        <div className="bg-white space-y-2 brightness-100 rounded-lg drop-shadow-lg w-full pl-[24px] pt-[16px] pr-[24px] pb-[16px]">
-          <h1
-            style={{ fontFamily: "Poppins" }}
-            className="text-[20px] font-semibold"
-          >
+        <div className="bg-white space-y-4 rounded-lg drop-shadow-lg w-full p-4 md:p-6">
+          <h1 className="font-['Poppins'] text-lg md:text-xl font-semibold">
             Performance across Key Parameters
           </h1>
-          <div
-            style={{ fontFamily: "Inter" }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-[18px]"
-          >
-            <div className="shadow-lg rounded-lg p-[20px] w-full">
+          <div className="font-['Inter'] grid grid-cols-1 lg:grid-cols-2 gap-6 text-base md:text-lg">
+            <div className="shadow-lg rounded-lg p-4 md:p-6 w-full">
               <h3 className="font-semibold">
                 Voice Insights :
                 <span className="font-medium">
@@ -224,7 +234,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
               </h3>
               <SpiderChart testData={voiceAverages} />
             </div>
-            <div className="shadow-lg rounded-lg p-[20px] w-full">
+            <div className="shadow-lg rounded-lg p-4 md:p-6 w-full">
               <h3 className="font-semibold">
                 Behavior Insights :
                 <span className="font-medium">
@@ -236,13 +246,12 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
             </div>
           </div>
         </div>
-        <div
-          style={{ fontFamily: "Poppins" }}
-          className="bg-white brightness-100 space-y-8 rounded-lg drop-shadow-lg w-full pl-[24px] pt-[16px] pr-[24px] pb-[16px]"
-        >
-          <h1 className="text-[20px] font-semibold">Detailed Voice Insights</h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+        <div className="bg-white space-y-6 rounded-lg drop-shadow-lg w-full p-4 md:p-6">
+          <h1 className="font-['Poppins'] text-lg md:text-xl font-semibold">
+            Detailed Voice Insights
+          </h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="The smoothness and ease of speech, without hesitations or repetitions.">
                   <div className="flex justify-between">
@@ -288,7 +297,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="Evaluates articulation, pronunciation, and overall intelligibility of spoken words and phrases">
                   <div className="flex justify-between">
@@ -334,7 +343,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="The ability to vary pitch, volume, and rate to effectively communicate emotions and ideas">
                   <div className="flex justify-between">
@@ -380,7 +389,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="The use of filler words, such as 'um' or 'uh', which can indicate a lack of confidence or preparation.">
                   <div className="flex justify-between">
@@ -435,8 +444,8 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
           <h1 className="text-[20px] font-semibold">
             Detailed Behavior Insights
           </h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="The ability to effectively manage and express emotions in a professional setting.">
                   <div className="flex justify-between">
@@ -484,7 +493,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="Evaluates vocal authority, self-assurance, and commanding presence conveyed through speech patterns">
                   <div className="flex justify-between">
@@ -532,7 +541,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="Analyzes speech rhythm, strategic use of silence, and appropriate timing for emphasis and comprehension">
                   <div className="flex justify-between">
@@ -580,7 +589,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-white drop-shadow-lg rounded-lg pr-[25px] pb-[10px] pl-[25px] pt-[10px] ">
+            <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
                 <Tooltip title="Assesses ability to capture and maintain audience attention through dynamic and interactive vocal delivery">
                   <div className="flex justify-between">
@@ -628,56 +637,53 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
             </div>
           </div>
         </div>
-        <div className="bg-white brightness-100 space-y-8 rounded-lg drop-shadow-lg w-full pl-[24px] pt-[16px] pr-[24px] pb-[16px]">
-          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <h1
-              style={{ fontFamily: "Poppins" }}
-              className="text-[20px] font-semibold"
-            >
+        <div className="bg-white rounded-lg drop-shadow-lg w-full p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-6">
+            <h1 className="font-['Poppins'] text-lg md:text-xl font-semibold">
               Recent Tests
             </h1>
             <button
               onClick={() => setViewAll((prev) => !prev)}
-              className="border w-full sm:w-[199px] hover:bg-[#34856C] cursor-pointer hover:text-white rounded-lg font-semibold pt-[10px] text-[16px] pb-[10px] pl-[53px] pr-[53px] text-[#34856C] border-[#34856C]"
+              className="w-full sm:w-auto border hover:bg-[#34856C] cursor-pointer hover:text-white rounded-lg font-semibold py-2 px-6 text-[#34856C] border-[#34856C]"
             >
               {viewAll ? "View Less" : "View All"}
             </button>
           </div>
           <div className="overflow-x-auto">
-            <table
-              style={{ fontFamily: "Inter" }}
-              className="w-full text-[18px] min-w-[600px]"
-            >
+            <table className="w-full text-sm md:text-base">
               <thead>
-                <tr className="pt-8 pr-8 pl-8 pb-4 text-gray-700 w-full bg-[#E7F0F0] ">
-                  <th className="p-[10px] font-medium">Test ID</th>
-                  <th className="p-[10px] font-medium">Language</th>
-                  <th className="p-[10px] font-medium">Date</th>
-                  <th className="p-[10px] font-medium">Overall Score</th>
-                  <th className="p-[10px] font-medium">Actions</th>
+                <tr className="bg-[#E7F0F0] text-gray-700">
+                  <th className="p-3 text-left font-medium hidden md:table-cell">
+                    Test ID
+                  </th>
+                  <th className="p-3 text-left font-medium">Language</th>
+                  <th className="p-3 text-left font-medium">Date</th>
+                  <th className="p-3 text-left font-medium">Score</th>
+                  <th className="p-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-200">
                 {data
                   ? data.map((item, index) => {
                       if (index < data.length - 5 && !viewAll) {
-                        return;
+                        return null;
                       }
                       return (
-                        <tr
-                          className="pt-2 border-b-[1px] border-gray-300 text-center pr-8 pl-8 pb-2 w-full "
-                          key={item._id}
-                        >
-                          <td className="p-[10px] ">{item._id}</td>
-                          <td className="p-[10px] ">{item.language}</td>
-                          <td className="p-[10px] ">{item.date}</td>
-                          <td className="p-[10px] ">
-                            {Math.ceil(item.overallScore)}
+                        <tr key={item._id} className="hover:bg-gray-50">
+                          <td className="p-3 hidden md:table-cell truncate max-w-[150px]">
+                            {item._id}
                           </td>
-                          <td className="p-[10px] ">
+                          <td className="p-3">{item.language}</td>
+                          <td className="p-3 whitespace-nowrap">
+                            {new Date(item.date).toLocaleDateString()}
+                          </td>
+                          <td className="p-3 font-medium">
+                            {Math.ceil(item.overallScore)}%
+                          </td>
+                          <td className="p-3 text-right">
                             <button
                               onClick={() => handleView(item)}
-                              className="p-[10px] cursor-pointer text-white rounded-lg bg-[#34856C]"
+                              className="px-3 py-1.5 text-sm sm:text-base text-white bg-[#34856C] hover:bg-[#2a6b5a] rounded-lg transition-colors"
                             >
                               View
                             </button>

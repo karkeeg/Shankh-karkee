@@ -137,7 +137,7 @@ const UserProfile = () => {
             type="button"
             className=" w-full sm:w-[300px] cursor-pointer text-center rounded-lg bg-[#FF6B5B] text-white font-semibold pr-[10px] text-[16px] pb-[10px] pl-[10px] pt-[10px]"
           >
-            Request more credits
+            Request more credit
           </button>
         </div>
 
