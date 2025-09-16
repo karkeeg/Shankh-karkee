@@ -122,7 +122,10 @@ const Onboarding9 = () => {
         voiceInsights: {
           fluency: response.data.fluency.fluency_score,
           toneModulation: response.data.tone.speech_dynamism_score,
-          clarity: response.data.vcs["Voice Clarity Sore"],
+          clarity:
+            response.data.vcs["Voice Clarity Score"] ||
+            response.data.vcs["Voice Clarity Sore"] ||
+            0,
           fillerWords: response.data.filler_words.filler_score,
         },
         behaviorInsights: {
@@ -155,7 +158,7 @@ const Onboarding9 = () => {
       ]);
 
       setSelectedTest(res.data.data);
-      console.log(response);
+
       setResultOut(true);
       setIsLoading(false);
     } catch (error) {

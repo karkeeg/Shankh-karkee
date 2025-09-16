@@ -9,6 +9,8 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
   const { userDetails, setSelectedTest } = useAppContext();
   const [temp, setTemp] = useState([]);
   const [data, setData] = useState([]);
+
+  console.log(userDetails);
   const [viewAll, setViewAll] = useState(false);
 
   const [behaviorAverages, setBehaviorAverages] = useState({});
@@ -27,11 +29,15 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
           `${import.meta.env.VITE_API_BASE_URL}/api/getAllTests`
         );
         console.log(
-          res.data.data.filter((item) => item.userId == userDetails._id)
+          res.data.data.filter((item) => item.userId !== userDetails._id)
         );
 
-        setTemp(res.data.data.filter((item) => item.userId == userDetails._id));
-        setData(res.data.data.filter((item) => item.userId == userDetails._id));
+        setTemp(
+          res.data.data.filter((item) => item.userId !== userDetails._id)
+        );
+        setData(
+          res.data.data.filter((item) => item.userId !== userDetails._id)
+        );
       } catch (error) {
         console.error("Error fetching test data :", error);
       }
@@ -139,12 +145,12 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     }, 0) / data.length || 0;
 
   const handleView = (item) => {
-    console.log(item);
+    console.log("Selected test data:", JSON.stringify(item, null, 2));
+    console.log("Voice Insights:", item.voiceInsights);
+    console.log("Clarity value:", item.voiceInsights?.clarity);
     setSelectedTest(item);
     setStatus("results");
   };
-
-  console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
 
   return (
     <div className="bg-[#E7F0F0] min-h-[calc(100vh-80px)] w-full p-2 md:p-6 space-y-6 overflow-y-auto">
@@ -241,7 +247,9 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
           </div>
         </div>
         <div className="bg-white space-y-6 rounded-lg drop-shadow-lg w-full p-4 md:p-6">
-          <h1 className="font-['Poppins'] text-lg md:text-xl font-semibold">Detailed Voice Insights</h1>
+          <h1 className="font-['Poppins'] text-lg md:text-xl font-semibold">
+            Detailed Voice Insights
+          </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white drop-shadow-lg rounded-lg p-4">
               <div className="flex justify-between">
@@ -645,7 +653,9 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
             <table className="w-full text-sm md:text-base">
               <thead>
                 <tr className="bg-[#E7F0F0] text-gray-700">
-                  <th className="p-3 text-left font-medium hidden md:table-cell">Test ID</th>
+                  <th className="p-3 text-left font-medium hidden md:table-cell">
+                    Test ID
+                  </th>
                   <th className="p-3 text-left font-medium">Language</th>
                   <th className="p-3 text-left font-medium">Date</th>
                   <th className="p-3 text-left font-medium">Score</th>

@@ -76,7 +76,8 @@ const Activity = ({ setStatus }) => {
         }
       );
 
-      console.log(response.data);
+      console.log('API Response:', JSON.stringify(response.data, null, 2));
+      console.log('VCS Data:', response.data.vcs);
 
       const test = {
         userId: userDetails._id,
@@ -90,10 +91,24 @@ const Activity = ({ setStatus }) => {
           response.data["detected_language"] ||
           response.data["Detected Language"],
         voiceInsights: {
-          fluency: response.data.fluency.fluency_score,
-          toneModulation: response.data.tone.speech_dynamism_score,
-          clarity: response.data.vcs["Voice Clarity Sore"],
-          fillerWords: response.data.filler_words.filler_score,
+          fluency: response.data.fluency?.fluency_score || 0,
+          toneModulation: response.data.tone?.speech_dynamism_score || 0,
+          clarity: (() => {
+            // Try all possible variations of the clarity score
+            const clarityValue = 
+              response.data.vcs?.['Voice Clarity Score'] ||
+              response.data.vcs?.['Voice Clarity Sore'] ||
+              (response.data.vcs && typeof response.data.vcs === 'object' ? 
+                Object.values(response.data.vcs).find(val => typeof val === 'number') : 
+                null);
+            
+            console.log('Extracted clarity value:', clarityValue);
+            // Ensure we return a number, default to 0 if not found
+            const finalValue = Number(clarityValue) || 0;
+            console.log('Final clarity value:', finalValue);
+            return finalValue;
+          })(),
+          fillerWords: response.data.filler_words?.filler_score || 0,
         },
         behaviorInsights: {
           emotionalRegulation: response.data.vers["VERS Score"],
