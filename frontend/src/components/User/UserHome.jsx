@@ -10,7 +10,6 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
   const [temp, setTemp] = useState([]);
   const [data, setData] = useState([]);
 
-  console.log(userDetails);
   const [viewAll, setViewAll] = useState(false);
 
   const [behaviorAverages, setBehaviorAverages] = useState({});
@@ -29,14 +28,14 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
           `${import.meta.env.VITE_API_BASE_URL}/api/getAllTests`
         );
         console.log(
-          res.data.data.filter((item) => item.userId !== userDetails._id)
+          res.data.data.filter((item) => item.userId !== userDetails?._id)
         );
 
         setTemp(
-          res.data.data.filter((item) => item.userId !== userDetails._id)
+          res.data.data.filter((item) => item.userId !== userDetails?._id)
         );
         setData(
-          res.data.data.filter((item) => item.userId !== userDetails._id)
+          res.data.data.filter((item) => item.userId !== userDetails?._id)
         );
       } catch (error) {
         console.error("Error fetching test data :", error);
@@ -46,6 +45,7 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     fetchData();
   }, []);
 
+  console.log("data", data);
   useEffect(() => {
     if (language == "All") {
       setData(
@@ -86,29 +86,82 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
       "Tone Modulation": 0,
       "Filler Words": 0,
     };
+
     data.forEach((test) => {
+      // Handle voice insights - check both old and new structure
       if (test.voiceInsights) {
-        newVoiceAverages["Fluency"] += test.voiceInsights.fluency || 0;
-        newVoiceAverages["Clarity"] += test.voiceInsights.clarity || 0;
-        newVoiceAverages["Tone Modulation"] +=
-          test.voiceInsights.toneModulation || 0;
-        newVoiceAverages["Filler Words"] += test.voiceInsights.fillerWords || 0;
+        // New structure with direct fields
+        if (test.fluency) {
+          newVoiceAverages["Fluency"] += test.fluency.fluency_score || 0;
+        } else {
+          // Fallback to old structure
+          newVoiceAverages["Fluency"] += test.voiceInsights.fluency || 0;
+        }
+
+        if (test.vcs) {
+          // Try to get clarity from vcs object
+          const clarityValue =
+            test.vcs["Voice Clarity Score"] ||
+            test.vcs["Voice Clarity Sore"] ||
+            (typeof test.vcs === "object"
+              ? Object.values(test.vcs).find((val) => typeof val === "number")
+              : null);
+          newVoiceAverages["Clarity"] += Number(clarityValue) || 0;
+        } else {
+          // Fallback to old structure
+          newVoiceAverages["Clarity"] += test.voiceInsights.clarity || 0;
+        }
+
+        if (test.tone) {
+          newVoiceAverages["Tone Modulation"] +=
+            test.tone.speech_dynamism_score || 0;
+        } else {
+          newVoiceAverages["Tone Modulation"] +=
+            test.voiceInsights.toneModulation || 0;
+        }
+
+        if (test.filler_words) {
+          newVoiceAverages["Filler Words"] +=
+            test.filler_words.filler_score || 0;
+        } else {
+          newVoiceAverages["Filler Words"] +=
+            test.voiceInsights.fillerWords || 0;
+        }
       }
-      if (test.behaviorInsights) {
+
+      // Handle behavior insights - check both old and new structure
+      if (
+        test.behaviorInsights ||
+        test.vers ||
+        test.voice_confidence ||
+        test.vps ||
+        test.ves
+      ) {
+        // New structure with separate fields
         newBehaviorAverages["Emotional Regulation"] +=
-          test.behaviorInsights.emotionalRegulation || 0;
+          test.vers?.["VERS Score"] ||
+          test.behaviorInsights?.emotionalRegulation ||
+          0;
+
         newBehaviorAverages["Confidence and Presence"] +=
-          test.behaviorInsights.confidenceAndPresence || 0;
+          test.voice_confidence?.["voice_confidence_score"] ||
+          test.behaviorInsights?.confidenceAndPresence ||
+          0;
+
         newBehaviorAverages["Pacing and Pauses"] +=
-          test.behaviorInsights.pacingAndPauses || 0;
+          test.vps?.["VPS"] || test.behaviorInsights?.pacingAndPauses || 0;
+
         newBehaviorAverages["Engagement"] +=
-          test.behaviorInsights.engagement || 0;
+          test.ves?.["ves"] || test.behaviorInsights?.engagement || 0;
       }
     });
+
+    // Calculate averages
     Object.keys(newVoiceAverages).forEach((key) => {
       newVoiceAverages[key] =
         data.length > 0 ? Math.floor(newVoiceAverages[key] / data.length) : 0;
     });
+
     Object.keys(newBehaviorAverages).forEach((key) => {
       newBehaviorAverages[key] =
         data.length > 0
@@ -120,29 +173,66 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     setVoiceAverages(newVoiceAverages);
   }, [data]);
 
+  // Calculate overall averages
   const behaviourAverage =
-    data.reduce((sum, test) => {
-      const insights = test.behaviorInsights;
-      const avg =
-        (insights.emotionalRegulation +
-          insights.confidenceAndPresence +
-          insights.pacingAndPauses +
-          insights.engagement) /
-        4;
-      return sum + avg;
-    }, 0) / data.length || 0;
+    data.length > 0
+      ? data.reduce((sum, test) => {
+          // Try new structure first, fall back to old structure
+          const emotionalRegulation =
+            test.vers?.["VERS Score"] ||
+            test.behaviorInsights?.emotionalRegulation ||
+            0;
+          const confidenceAndPresence =
+            test.voice_confidence?.["voice_confidence_score"] ||
+            test.behaviorInsights?.confidenceAndPresence ||
+            0;
+          const pacingAndPauses =
+            test.vps?.["VPS"] || test.behaviorInsights?.pacingAndPauses || 0;
+          const engagement =
+            test.ves?.["ves"] || test.behaviorInsights?.engagement || 0;
+
+          const avg =
+            (emotionalRegulation +
+              confidenceAndPresence +
+              pacingAndPauses +
+              engagement) /
+            4;
+          return sum + avg;
+        }, 0) / data.length
+      : 0;
 
   const vocalAverage =
-    data.reduce((sum, test) => {
-      const insights = test.voiceInsights;
-      const avg =
-        (insights.fluency +
-          insights.toneModulation +
-          insights.fillerWords +
-          insights.clarity) /
-        4;
-      return sum + avg;
-    }, 0) / data.length || 0;
+    data.length > 0
+      ? data.reduce((sum, test) => {
+          // Try new structure first, fall back to old structure
+          const fluency =
+            test.fluency?.fluency_score || test.voiceInsights?.fluency || 0;
+
+          let clarity = 0;
+          if (test.vcs) {
+            clarity =
+              test.vcs["Voice Clarity Score"] ||
+              test.vcs["Voice Clarity Sore"] ||
+              (typeof test.vcs === "object"
+                ? Object.values(test.vcs).find((val) => typeof val === "number")
+                : 0);
+          } else {
+            clarity = test.voiceInsights?.clarity || 0;
+          }
+
+          const toneModulation =
+            test.tone?.speech_dynamism_score ||
+            test.voiceInsights?.toneModulation ||
+            0;
+          const fillerWords =
+            test.filler_words?.filler_score ||
+            test.voiceInsights?.fillerWords ||
+            0;
+
+          const avg = (fluency + clarity + toneModulation + fillerWords) / 4;
+          return sum + avg;
+        }, 0) / data.length
+      : 0;
 
   const handleView = (item) => {
     console.log("Selected test data:", JSON.stringify(item, null, 2));

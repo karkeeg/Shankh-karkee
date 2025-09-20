@@ -58,6 +58,8 @@ const Activity = ({ setStatus }) => {
     }
 
     setIsLoading(true);
+    console.log('Starting voice analysis...');
+    console.log('Audio file size:', (recordedChunks[0].size / 1024).toFixed(2), 'KB');
 
     const audioFile = new File([recordedChunks[0]], "recording.wav", {
       type: "audio/wav",
@@ -67,6 +69,7 @@ const Activity = ({ setStatus }) => {
       const formData = new FormData();
       formData.append("file", audioFile);
       formData.append("language", "en");
+      console.log('Sending request to API...');
 
       const response = await axios.post(
         "https://api.shankh.ai/analyze_all/",
@@ -76,10 +79,51 @@ const Activity = ({ setStatus }) => {
         }
       );
 
-      console.log('API Response:', JSON.stringify(response.data, null, 2));
-      console.log('VCS Data:', response.data.vcs);
+      // Log the complete response structure
+      console.group('=== VOICE ANALYSIS RESULTS ===');
+      console.log('Full API Response:', response.data);
+      
+      // Log detected language
+      console.log('\n=== LANGUAGE ===');
+      console.log('Detected Language:', response.data.detected_language || response.data['Detected Language']);
+      
+      // Log voice clarity scores
+      console.log('\n=== VOICE CLARITY ===');
+      console.log('Voice Clarity Score:', response.data.vcs?.['Voice Clarity Score'] || 'N/A');
+      console.log('Voice Clarity Breakdown:', response.data.vcs || 'N/A');
+      
+      // Log fluency metrics
+      console.log('\n=== FLUENCY ===');
+      console.log('Fluency Score:', response.data.fluency?.fluency_score || 'N/A');
+      console.log('Fluency Breakdown:', response.data.fluency || 'N/A');
+      
+      // Log tone analysis
+      console.log('\n=== TONE ANALYSIS ===');
+      console.log('Tone Modulation:', response.data.tone || 'N/A');
+      
+      // Log speech rate and other metrics
+      console.log('\n=== SPEECH METRICS ===');
+      console.log('Speech Rate (WPM):', response.data.speech_rate?.words_per_minute || 'N/A');
+      console.log('Pitch Analysis:', response.data.pitch_analysis || 'N/A');
+      
+      // Log filler words
+      console.log('\n=== FILLER WORDS ===');
+      console.log('Filler Words Detected:', response.data.filler_words || 'N/A');
+      
+      // Log behavior insights if available
+      if (response.data.behavior_insights) {
+        console.log('\n=== BEHAVIORAL INSIGHTS ===');
+        console.log('Behavior Insights:', response.data.behavior_insights);
+      }
+      
+      console.groupEnd();
+      
+      // Save the complete response for debugging
+      window.lastVoiceAnalysis = response.data;
 
+      // Create test object with all data from the API response
       const test = {
+        // Basic info
         userId: userDetails._id,
         orgId: userDetails.orgId,
         date: new Date().toLocaleDateString("en-US", {
@@ -87,45 +131,73 @@ const Activity = ({ setStatus }) => {
           month: "long",
           year: "numeric",
         }),
-        language:
-          response.data["detected_language"] ||
-          response.data["Detected Language"],
+        
+        // Language information
+        language: response.data.language,
+        detected_language: response.data.detected_language || response.data["Detected Language"],
+        
+        // Overall score
+        overallScore: response.data.sank_score,
+        
+        // Voice Clarity Score
+        vcs: response.data.vcs || {},
+        
+        // Voice Emotion Recognition Score
+        vers: response.data.vers || {},
+        
+        // Voice Confidence Score
+        voice_confidence: response.data.voice_confidence || {},
+        
+        // Voice Pitch Score
+        vps: response.data.vps || {},
+        
+        // Voice Engagement Score
+        ves: response.data.ves || {},
+        
+        // Raw voice insights (compatibility with existing code)
         voiceInsights: {
           fluency: response.data.fluency?.fluency_score || 0,
           toneModulation: response.data.tone?.speech_dynamism_score || 0,
           clarity: (() => {
-            // Try all possible variations of the clarity score
             const clarityValue = 
               response.data.vcs?.['Voice Clarity Score'] ||
               response.data.vcs?.['Voice Clarity Sore'] ||
               (response.data.vcs && typeof response.data.vcs === 'object' ? 
                 Object.values(response.data.vcs).find(val => typeof val === 'number') : 
                 null);
-            
-            console.log('Extracted clarity value:', clarityValue);
-            // Ensure we return a number, default to 0 if not found
-            const finalValue = Number(clarityValue) || 0;
-            console.log('Final clarity value:', finalValue);
-            return finalValue;
+            return Number(clarityValue) || 0;
           })(),
           fillerWords: response.data.filler_words?.filler_score || 0,
         },
+        
+        // Behavioral insights (compatibility with existing code)
         behaviorInsights: {
-          emotionalRegulation: response.data.vers["VERS Score"],
-          confidenceAndPresence:
-            response.data.voice_confidence["voice_confidence_score"],
-          pacingAndPauses: response.data.vps["VPS"],
-          engagement: response.data.ves["ves"],
+          emotionalRegulation: response.data.vers?.["VERS Score"],
+          confidenceAndPresence: response.data.voice_confidence?.["voice_confidence_score"],
+          pacingAndPauses: response.data.vps?.["VPS"],
+          engagement: response.data.ves?.["ves"],
         },
-        fillerWordsUsed: response.data.filler_words.total_fillers,
-        fillerWordsDetails: {
-          counts: response.data.filler_words.filler_counts,
-          totalFillers: response.data.filler_words.total_fillers,
-          fillerScore: response.data.filler_words.filler_score,
-          fillerRatePerMin: response.data.filler_words.filler_rate_per_min,
-        },
-        transcript: response.data.transcript,
-        overallScore: response.data.sank_score,
+        
+        // Filler words detailed info
+        filler_words: response.data.filler_words || {},
+        
+        // Speech rate analysis
+        speech_rate: response.data.speech_rate || {},
+        
+        // Pitch analysis
+        pitch_analysis: response.data.pitch_analysis || {},
+        
+        // Tone analysis
+        tone: response.data.tone || {},
+        
+        // Fluency analysis
+        fluency: response.data.fluency || {},
+        
+        // Transcript
+        transcript: response.data.transcript || "",
+        
+        // Store the complete raw response for reference
+        raw_response: response.data
       };
 
       const [res, res2] = await Promise.all([
