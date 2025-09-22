@@ -4,15 +4,202 @@ import SpiderChart from "../../SpiderChart";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-const Results = () => {
-  const { userDetails, transcript, selectedTest } = useAppContext();
-
-  console.log("fILLER value:", selectedTest.filler_words);
-  if (selectedTest.voiceInsights) {
-    console.log("Type of clarity:", typeof selectedTest.voiceInsights.clarity);
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
 
-  console;
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error in component:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+          <h3 className="font-bold">Something went wrong</h3>
+          <p className="text-sm">{String(this.state.error)}</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// SafeRender component to handle rendering with error boundaries
+const SafeRender = ({ children, fallback = null }) => {
+  try {
+    const content = typeof children === 'function' ? children() : children;
+    return <ErrorBoundary>{content}</ErrorBoundary>;
+  } catch (error) {
+    console.error('Error in SafeRender:', error);
+    return fallback;
+  }
+};
+
+// Helper function to safely convert a value to a string, handling Buffer objects
+const safeToString = (value) => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value instanceof Date) return value.toISOString();
+  if (value.buffer) return Buffer.from(value.buffer).toString('utf-8');
+  try {
+    return JSON.stringify(value);
+  } catch (e) {
+    console.warn('Could not stringify value:', value, e);
+    return String(value);
+  }
+};
+
+// Helper function to safely convert a value to a number, handling Buffer objects
+const safeToNumber = (value, defaultValue = 0) => {
+  if (value === null || value === undefined) return defaultValue;
+  if (typeof value === 'number') return isNaN(value) ? defaultValue : value;
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  
+  let strValue;
+  if (value.buffer) {
+    strValue = Buffer.from(value.buffer).toString('utf-8');
+  } else {
+    strValue = String(value);
+  }
+  
+  const num = parseFloat(strValue);
+  return isNaN(num) ? defaultValue : num;
+};
+
+// Helper function to recursively sanitize any object
+const sanitizeObject = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  
+  // Handle Buffer objects
+  if (obj.buffer && obj.buffer instanceof ArrayBuffer) {
+    return safeToNumber(obj);
+  }
+  
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeObject(item));
+  }
+  
+  // Handle plain objects
+  const result = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+      
+      // Skip special keys that might cause issues
+      if (key.startsWith('_') && key !== '_id') continue;
+      
+      if (value && typeof value === 'object') {
+        result[key] = sanitizeObject(value);
+      } else {
+        // For primitive values, ensure they're in a safe format
+        if (typeof value === 'string' && !isNaN(Number(value))) {
+          result[key] = safeToNumber(value);
+        } else {
+          result[key] = value;
+        }
+      }
+    }
+  }
+  return result;
+};
+
+// Main function to sanitize test data
+const sanitizeTestData = (testData) => {
+  if (!testData) return {};
+  
+  try {
+    // First, create a deep copy to avoid modifying the original
+    const sanitized = JSON.parse(JSON.stringify(testData));
+    
+    // Process voiceInsights
+    if (sanitized.voiceInsights) {
+      Object.keys(sanitized.voiceInsights).forEach(key => {
+        sanitized.voiceInsights[key] = safeToNumber(sanitized.voiceInsights[key]);
+      });
+    }
+    
+    // Process behaviorInsights
+    if (sanitized.behaviorInsights) {
+      Object.keys(sanitized.behaviorInsights).forEach(key => {
+        sanitized.behaviorInsights[key] = safeToNumber(sanitized.behaviorInsights[key]);
+      });
+    }
+    
+    // Ensure overallScore is a number
+    if (sanitized.overallScore !== undefined) {
+      sanitized.overallScore = safeToNumber(sanitized.overallScore);
+    }
+    
+    // Sanitize any nested objects
+    return sanitizeObject(sanitized);
+    
+  } catch (error) {
+    console.error('Error sanitizing test data:', error);
+    // Return a safe empty object if there's an error
+    return {
+      voiceInsights: {},
+      behaviorInsights: {},
+      overallScore: 0,
+      date: new Date().toISOString(),
+      _id: 'error'
+    };
+  }
+};
+
+// Helper function to safely render any value in JSX
+const safeRender = (value, fallback = '') => {
+  if (value === null || value === undefined) return fallback;
+  
+  try {
+    // Handle Buffer objects
+    if (value.buffer) {
+      return Buffer.from(value.buffer).toString('utf-8');
+    }
+    
+    // Handle dates
+    if (value instanceof Date || (typeof value === 'string' && !isNaN(Date.parse(value)))) {
+      return new Date(value).toLocaleDateString();
+    }
+    
+    // Handle objects and arrays
+    if (typeof value === 'object') {
+      // Skip rendering complex objects directly
+      if (Array.isArray(value) || Object.keys(value).length > 0) {
+        return JSON.stringify(value);
+      }
+      return fallback;
+    }
+    
+    // Handle primitive values
+    return String(value);
+    
+  } catch (error) {
+    console.warn('Error rendering value:', value, error);
+    return fallback;
+  }
+};
+
+const ResultsContent = () => {
+  const { userDetails, transcript, selectedTest: rawSelectedTest } = useAppContext();
+  
+  // Sanitize the selectedTest data
+  const selectedTest = React.useMemo(() => sanitizeTestData(rawSelectedTest), [rawSelectedTest]);
+
+  console.log("Sanitized test data:", selectedTest);
+  if (selectedTest.voiceInsights) {
+    console.log("Sanitized clarity type:", typeof selectedTest.voiceInsights.clarity);
+  }
 
   // Add null checks to prevent errors when selectedTest is empty
   if (
@@ -99,6 +286,19 @@ const Results = () => {
       return y + 6;
     };
 
+    // Helper function to ensure a value is a string
+    const ensureString = (value) => {
+      if (value === null || value === undefined) return '';
+      if (typeof value === 'object') {
+        if (value.buffer) {
+          // Handle Buffer objects
+          return Buffer.from(value.buffer).toString();
+        }
+        return JSON.stringify(value);
+      }
+      return String(value);
+    };
+
     // Helper function to create a table
     const createTable = (headers, data, startY, colWidths) => {
       const rowHeight = 8;
@@ -117,7 +317,7 @@ const Results = () => {
       let currentX = margin;
       headers.forEach((header, index) => {
         pdf.rect(currentX, startY, colWidths[index], headerHeight, "F");
-        pdf.text(header, currentX + 2, startY + 6);
+        pdf.text(ensureString(header), currentX + 2, startY + 6);
         currentX += colWidths[index];
       });
 
@@ -135,7 +335,7 @@ const Results = () => {
             rowIndex % 2 === 0 ? [248, 250, 250] : [255, 255, 255];
           pdf.setFillColor(...bgColor);
           pdf.rect(currentX, rowY, colWidths[cellIndex], rowHeight, "F");
-          pdf.text(cell, currentX + 2, rowY + 5);
+          pdf.text(ensureString(cell), currentX + 2, rowY + 5);
           currentX += colWidths[cellIndex];
         });
       });
@@ -156,6 +356,17 @@ const Results = () => {
       return startY + headerHeight + data.length * rowHeight + 10;
     };
 
+    // Helper function to ensure a value is a number
+    const ensureNumber = (value) => {
+      if (value === null || value === undefined) return 0;
+      if (typeof value === 'object' && value.buffer) {
+        // Handle Buffer objects
+        return Number(Buffer.from(value.buffer).toString()) || 0;
+      }
+      const num = Number(value);
+      return isNaN(num) ? 0 : num;
+    };
+
     // Helper function to create a radar chart
     const createRadarChart = (
       data,
@@ -165,10 +376,17 @@ const Results = () => {
       title,
       startY
     ) => {
-      const angleStep = (2 * Math.PI) / Object.keys(data).length;
-      const angles = Object.keys(data).map((_, index) => index * angleStep);
-      const labels = Object.keys(data);
-      const values = Object.values(data);
+      const filteredData = Object.entries(data)
+        .filter(([key]) => key !== '_id' && key !== '__v')
+        .reduce((acc, [key, value]) => {
+          acc[key] = ensureNumber(value);
+          return acc;
+        }, {});
+      
+      const angleStep = (2 * Math.PI) / Object.keys(filteredData).length;
+      const angles = Object.keys(filteredData).map((_, index) => index * angleStep);
+      const labels = Object.keys(filteredData);
+      const values = Object.values(filteredData);
 
       // Draw title
       pdf.setFontSize(12);
@@ -254,9 +472,19 @@ const Results = () => {
 
     // Helper function to create a bar chart
     const createBarChart = (data, startX, startY, width, height, title) => {
-      const maxValue = Math.max(...Object.values(data));
-      const barWidth = width / Object.keys(data).length;
-      const barSpacing = 5;
+      // Filter and convert data to ensure all values are numbers
+      const filteredData = Object.entries(data)
+        .filter(([key]) => key !== '_id' && key !== '__v')
+        .reduce((acc, [key, value]) => {
+          acc[key] = ensureNumber(value);
+          return acc;
+        }, {});
+      
+      // Ensure we have at least one value to prevent division by zero
+      const maxValue = Math.max(1, ...Object.values(filteredData));
+      const barCount = Object.keys(filteredData).length || 1;
+      const barWidth = Math.min(30, (width - (barCount - 1) * 5) / barCount); // Max bar width 30, min spacing 5
+      const barSpacing = barCount > 1 ? (width - barCount * barWidth) / (barCount - 1) : 0;
 
       // Draw title
       pdf.setFontSize(12);
@@ -265,15 +493,18 @@ const Results = () => {
       pdf.text(title, startX, startY);
 
       // Draw bars
-      Object.entries(data).forEach(([label, value], index) => {
+      Object.entries(filteredData).forEach(([label, value], index) => {
         const barHeight = (value / maxValue) * height;
         const x = startX + index * (barWidth + barSpacing);
         const y = startY + 15 + (height - barHeight);
 
+        // Ensure value is a number
+        const numValue = ensureNumber(value);
+        
         // Color based on value
-        if (value <= 39) {
+        if (numValue <= 39) {
           pdf.setFillColor(255, 107, 91); // #FF6B5B
-        } else if (value <= 69) {
+        } else if (numValue <= 69) {
           pdf.setFillColor(249, 168, 38); // #F9A826
         } else {
           pdf.setFillColor(52, 133, 108); // #34856C
@@ -281,18 +512,29 @@ const Results = () => {
 
         pdf.rect(x, y, barWidth, barHeight, "F");
 
-        // Draw value on bar
-        pdf.setFontSize(8);
-        pdf.setTextColor(255, 255, 255);
-        pdf.text(
-          `${Math.ceil(value)}%`,
-          x + barWidth / 2 - 8,
-          y + barHeight / 2 + 2
-        );
+        // Draw value on bar (only if there's enough space)
+        if (barHeight > 15) {
+          pdf.setFontSize(8);
+          pdf.setTextColor(255, 255, 255);
+          pdf.text(
+            `${Math.ceil(numValue)}%`,
+            x + barWidth / 2 - 8,
+            y + barHeight / 2 + 2
+          );
+        }
 
-        // Draw label
+        // Draw label (truncate if too long)
+        const maxLabelLength = Math.floor(barWidth / 2);
+        const displayLabel = label.length > maxLabelLength 
+          ? `${label.substring(0, maxLabelLength - 1)}…` 
+          : label;
+          
+        pdf.setFontSize(8);
         pdf.setTextColor(0, 0, 0);
-        pdf.text(label, x + barWidth / 2 - 8, startY + 15 + height + 5);
+        pdf.text(displayLabel, x, startY + 15 + height + 5, {
+          maxWidth: barWidth,
+          align: 'center'
+        });
       });
 
       return startY + height + 40;
@@ -314,11 +556,12 @@ const Results = () => {
 
     const testInfoHeaders = ["Field", "Value"];
     const testInfoData = [
-      ["Test ID", selectedTest._id],
-      ["Date", selectedTest.date],
-      ["Language", selectedTest.language || "Auto-detected"],
-      ["Overall Score", `${Math.ceil(selectedTest.overallScore)}%`],
-    ];
+      ["Test ID", ensureString(selectedTest._id)],
+      ["Date", ensureString(selectedTest.date)],
+      ["Language", ensureString(selectedTest.language) || "Auto-detected"],
+      ["Overall Score", `${Math.ceil(ensureNumber(selectedTest.overallScore))}%`],
+    ].filter(([_, value]) => value !== undefined); // Remove any undefined values
+    
     const testInfoWidths = [50, 110];
     yPosition = createTable(
       testInfoHeaders,
@@ -333,11 +576,12 @@ const Results = () => {
 
     const userInfoHeaders = ["Field", "Value"];
     const userInfoData = [
-      ["Name", userDetails.userName],
-      ["Organization", userDetails.orgName],
-      ["Location", userDetails.location || "Not specified"],
-      ["Occupation", userDetails.occupation || "Not specified"],
-    ];
+      ["Name", ensureString(userDetails?.userName) || "Not specified"],
+      ["Organization", ensureString(userDetails?.orgName) || "Not specified"],
+      ["Location", ensureString(userDetails?.location) || "Not specified"],
+      ["Occupation", ensureString(userDetails?.occupation) || "Not specified"],
+    ].filter(([_, value]) => value !== undefined); // Remove any undefined values
+    
     const userInfoWidths = [50, 110];
     yPosition = createTable(
       userInfoHeaders,
@@ -350,7 +594,8 @@ const Results = () => {
     yPosition = addSectionHeader("Overall Assessment", yPosition);
     yPosition += 5;
 
-    const overallScore = Math.ceil(selectedTest.overallScore);
+    // Ensure overallScore is a number
+    const overallScore = Math.ceil(ensureNumber(selectedTest.overallScore));
     let performanceLevel = "";
 
     if (overallScore <= 39) {
@@ -380,23 +625,38 @@ const Results = () => {
       pdf.setFillColor(52, 133, 108); // #34856C
     }
 
-    const filledWidth = (overallScore / 100) * scoreBarWidth;
+    const filledWidth = Math.min(Math.max(overallScore, 0), 100) / 100 * scoreBarWidth;
     pdf.rect(scoreBarX, scoreBarY, filledWidth, scoreBarHeight, "F");
 
     // Score text
     pdf.setFontSize(12);
     pdf.setFont("helvetica", "bold");
     pdf.setTextColor(0, 0, 0);
-    pdf.text(
-      `${overallScore}%`,
-      scoreBarX + scoreBarWidth + 10,
-      scoreBarY + 10
-    );
-    pdf.text(
-      `(${performanceLevel})`,
-      scoreBarX + scoreBarWidth + 10,
-      scoreBarY + 20
-    );
+    
+    // Ensure the score text fits within the page
+    const scoreTextX = scoreBarX + scoreBarWidth + 10;
+    const maxScoreTextX = pdf.internal.pageSize.width - margin - 30; // Leave 30pt margin on right
+    
+    if (scoreTextX < maxScoreTextX) {
+      pdf.text(
+        `${overallScore}%`,
+        scoreTextX,
+        scoreBarY + 10
+      );
+      pdf.text(
+        `(${performanceLevel})`,
+        scoreTextX,
+        scoreBarY + 20
+      );
+    } else {
+      // If there's not enough space, put it below the bar
+      yPosition += scoreBarHeight + 5;
+      pdf.text(
+        `Score: ${overallScore}% (${performanceLevel})`,
+        scoreBarX,
+        yPosition
+      );
+    }
 
     yPosition += 30;
 
@@ -413,50 +673,31 @@ const Results = () => {
     const scaleWidths = [30, 25, 105];
     yPosition = createTable(scaleHeaders, scaleData, yPosition, scaleWidths);
 
+    // Helper function to get performance level
+    const getPerformanceLevel = (score) => {
+      const numScore = ensureNumber(score);
+      if (numScore <= 39) return "Novice";
+      if (numScore <= 69) return "Emerging";
+      return "Proficient";
+    };
+
     // Voice Insights Table
     yPosition = addSectionHeader("Voice Insights Summary", yPosition);
     yPosition += 5;
 
     const voiceHeaders = ["Parameter", "Score", "Level"];
-    const voiceData = [
-      [
-        "Fluency",
-        `${Math.ceil(selectedTest.voiceInsights.fluency)}%`,
-        selectedTest.voiceInsights.fluency <= 39
-          ? "Novice"
-          : selectedTest.voiceInsights.fluency <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-      [
-        "Tone Modulation",
-        `${Math.ceil(selectedTest.voiceInsights.toneModulation)}%`,
-        selectedTest.voiceInsights.toneModulation <= 39
-          ? "Novice"
-          : selectedTest.voiceInsights.toneModulation <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-      [
-        "Clarity",
-        `${Math.ceil(selectedTest.voiceInsights.clarity || 0)}%`,
-        (selectedTest.voiceInsights.clarity || 0) <= 39
-          ? "Novice"
-          : (selectedTest.voiceInsights.clarity || 0) <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-      [
-        "Filler Words",
-        `${Math.ceil(selectedTest.voiceInsights.fillerWords)}%`,
-        selectedTest.voiceInsights.fillerWords <= 39
-          ? "Novice"
-          : selectedTest.voiceInsights.fillerWords <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-    ];
-    const voiceWidths = [50, 30, 80];
+    const voiceData = Object.entries(selectedTest.voiceInsights || {})
+      .filter(([key]) => key !== '_id' && key !== '__v')
+      .map(([key, value]) => {
+        const numValue = ensureNumber(value);
+        return [
+          key.split(/(?=[A-Z])/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          `${Math.ceil(numValue)}%`,
+          getPerformanceLevel(numValue)
+        ];
+      });
+
+    const voiceWidths = [70, 30, 60];
     yPosition = createTable(voiceHeaders, voiceData, yPosition, voiceWidths);
 
     // Behavior Insights Table
@@ -464,45 +705,18 @@ const Results = () => {
     yPosition += 5;
 
     const behaviorHeaders = ["Parameter", "Score", "Level"];
-    const behaviorData = [
-      [
-        "Emotional Regulation",
-        `${Math.ceil(selectedTest.behaviorInsights.emotionalRegulation)}%`,
-        selectedTest.behaviorInsights.emotionalRegulation <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.emotionalRegulation <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-      [
-        "Confidence & Presence",
-        `${Math.ceil(selectedTest.behaviorInsights.confidenceAndPresence)}%`,
-        selectedTest.behaviorInsights.confidenceAndPresence <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.confidenceAndPresence <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-      [
-        "Pacing & Pauses",
-        `${Math.ceil(selectedTest.behaviorInsights.pacingAndPauses)}%`,
-        selectedTest.behaviorInsights.pacingAndPauses <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.pacingAndPauses <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-      [
-        "Engagement",
-        `${Math.ceil(selectedTest.behaviorInsights.engagement)}%`,
-        selectedTest.behaviorInsights.engagement <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.engagement <= 69
-          ? "Emerging"
-          : "Proficient",
-      ],
-    ];
-    const behaviorWidths = [50, 30, 80];
+    const behaviorData = Object.entries(selectedTest.behaviorInsights || {})
+      .filter(([key]) => key !== '_id' && key !== '__v')
+      .map(([key, value]) => {
+        const numValue = ensureNumber(value);
+        return [
+          key.split(/(?=[A-Z])/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          `${Math.ceil(numValue)}%`,
+          getPerformanceLevel(numValue)
+        ];
+      });
+
+    const behaviorWidths = [70, 30, 60];
     yPosition = createTable(
       behaviorHeaders,
       behaviorData,
@@ -514,30 +728,50 @@ const Results = () => {
     yPosition = addSectionHeader("Filler Words Analysis", yPosition);
     yPosition += 5;
 
-    const totalFillers = Object.values(selectedTest.fillerWordsUsed).reduce(
+    // Ensure fillerWordsUsed is an object and handle potential buffer objects
+    const fillerWordsUsed = selectedTest.fillerWordsUsed || {};
+    const sanitizedFillerWords = Object.entries(fillerWordsUsed).reduce((acc, [key, value]) => {
+      // Ensure the value is a number
+      const numValue = ensureNumber(value);
+      if (numValue > 0) {
+        acc[key] = numValue;
+      }
+      return acc;
+    }, {});
+
+    const totalFillers = Object.values(sanitizedFillerWords).reduce(
       (a, b) => a + b,
       0
     );
+    
     yPosition += addNormalText(
       `Total Filler Words Used: ${totalFillers}`,
       yPosition
     );
     yPosition += 10;
 
-    // Filler Words Bar Chart
-    const sortedFillers = Object.entries(selectedTest.fillerWordsUsed)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5);
+    if (Object.keys(sanitizedFillerWords).length > 0) {
+      // Filler Words Bar Chart - show top 5 most used filler words
+      const sortedFillers = Object.entries(sanitizedFillerWords)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5);
 
-    const fillerData = Object.fromEntries(sortedFillers);
-    yPosition = createBarChart(
-      fillerData,
-      margin,
-      yPosition,
-      150,
-      60,
-      "Most Used Filler Words"
-    );
+      const fillerData = Object.fromEntries(sortedFillers);
+      yPosition = createBarChart(
+        fillerData,
+        margin,
+        yPosition,
+        150,
+        60,
+        "Most Used Filler Words"
+      );
+    } else {
+      yPosition += addNormalText(
+        "No filler words detected in this recording.",
+        yPosition
+      );
+      yPosition += 10;
+    }
 
     // Check if we need a new page
     if (yPosition > pdfHeight - 50) {
@@ -597,95 +831,80 @@ const Results = () => {
     yPosition += 5;
 
     const analysisHeaders = ["Parameter", "Score", "Level", "Description"];
-    const analysisData = [
-      [
-        "Fluency",
-        `${Math.ceil(selectedTest.voiceInsights.fluency)}%`,
-        selectedTest.voiceInsights.fluency <= 39
-          ? "Novice"
-          : selectedTest.voiceInsights.fluency <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Smooth speech without interruptions or hesitations",
-      ],
-      [
-        "Tone Modulation",
-        `${Math.ceil(selectedTest.voiceInsights.toneModulation)}%`,
-        selectedTest.voiceInsights.toneModulation <= 39
-          ? "Novice"
-          : selectedTest.voiceInsights.toneModulation <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Voice pitch, volume, and speed variation",
-      ],
-      [
-        "Clarity",
-        `${Math.ceil(selectedTest.voiceInsights.clarity || 0)}%`,
-        (selectedTest.voiceInsights.clarity || 0) <= 39
-          ? "Novice"
-          : (selectedTest.voiceInsights.clarity || 0) <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Clear and distinct pronunciation",
-      ],
-      [
-        "Filler Words",
-        `${Math.ceil(selectedTest.voiceInsights.fillerWords)}%`,
-        selectedTest.voiceInsights.fillerWords <= 39
-          ? "Novice"
-          : selectedTest.voiceInsights.fillerWords <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Minimal use of unnecessary words",
-      ],
-      [
-        "Emotional Regulation",
-        `${Math.ceil(selectedTest.behaviorInsights.emotionalRegulation)}%`,
-        selectedTest.behaviorInsights.emotionalRegulation <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.emotionalRegulation <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Control and expression of emotions",
-      ],
-      [
-        "Confidence & Presence",
-        `${Math.ceil(selectedTest.behaviorInsights.confidenceAndPresence)}%`,
-        selectedTest.behaviorInsights.confidenceAndPresence <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.confidenceAndPresence <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Self-assurance and attention command",
-      ],
-      [
-        "Pacing & Pauses",
-        `${Math.ceil(selectedTest.behaviorInsights.pacingAndPauses)}%`,
-        selectedTest.behaviorInsights.pacingAndPauses <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.pacingAndPauses <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Timing, rhythm, and strategic pauses",
-      ],
-      [
-        "Engagement",
-        `${Math.ceil(selectedTest.behaviorInsights.engagement)}%`,
-        selectedTest.behaviorInsights.engagement <= 39
-          ? "Novice"
-          : selectedTest.behaviorInsights.engagement <= 69
-          ? "Emerging"
-          : "Proficient",
-        "Audience connection and interest maintenance",
-      ],
-    ];
-    const analysisWidths = [40, 25, 25, 70];
-    yPosition = createTable(
-      analysisHeaders,
-      analysisData,
-      yPosition,
-      analysisWidths
-    );
+    
+    // Parameter descriptions
+    const parameterDescriptions = {
+      // Voice Insights
+      fluency: "Smooth speech without interruptions or hesitations",
+      toneModulation: "Voice pitch, volume, and speed variation",
+      clarity: "Clear and distinct pronunciation",
+      fillerWords: "Minimal use of unnecessary words",
+      
+      // Behavior Insights
+      emotionalRegulation: "Control and expression of emotions",
+      confidenceAndPresence: "Self-assurance and attention command",
+      pacingAndPauses: "Timing, rhythm, and strategic pauses",
+      engagement: "Audience connection and interest maintenance"
+    };
+    
+    // Process voice insights
+    const voiceInsightsData = Object.entries(selectedTest.voiceInsights || {})
+      .filter(([key]) => key in parameterDescriptions)
+      .map(([key, value]) => {
+        const numValue = ensureNumber(value);
+        return {
+          category: 'voice',
+          key,
+          name: key.split(/(?=[A-Z])/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          score: numValue,
+          level: getPerformanceLevel(numValue),
+          description: parameterDescriptions[key] || ""
+        };
+      });
+    
+    // Process behavior insights
+    const behaviorInsightsData = Object.entries(selectedTest.behaviorInsights || {})
+      .filter(([key]) => key in parameterDescriptions)
+      .map(([key, value]) => {
+        const numValue = ensureNumber(value);
+        return {
+          category: 'behavior',
+          key,
+          name: key.split(/(?=[A-Z])/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          score: numValue,
+          level: getPerformanceLevel(numValue),
+          description: parameterDescriptions[key] || ""
+        };
+      });
+    
+    // Combine and sort all parameters
+    const allParameters = [...voiceInsightsData, ...behaviorInsightsData]
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Convert to table data format
+    const analysisData = allParameters.map(param => [
+      param.name,
+      `${Math.ceil(param.score)}%`,
+      param.level,
+      param.description
+    ]);
+    
+    const analysisWidths = [50, 20, 25, 85]; // Adjusted widths for better fit
+    
+    if (analysisData.length > 0) {
+      yPosition = createTable(
+        analysisHeaders,
+        analysisData,
+        yPosition,
+        analysisWidths
+      );
+    } else {
+      yPosition += addNormalText(
+        "No detailed analysis data available.",
+        yPosition
+      );
+      yPosition += 10;
+    }
 
     // Check if we need a new page
     if (yPosition > pdfHeight - 100) {
@@ -699,44 +918,92 @@ const Results = () => {
 
     const recommendations = [];
 
-    if (selectedTest.voiceInsights.fluency <= 39) {
-      recommendations.push(
+    // Helper function to add a recommendation if the score is below a threshold
+    const addRecommendation = (score, threshold, message) => {
+      const numScore = ensureNumber(score);
+      if (numScore <= threshold) {
+        recommendations.push(message);
+      }
+    };
+
+    // Voice insights recommendations
+    if (selectedTest.voiceInsights) {
+      const vi = selectedTest.voiceInsights;
+      
+      addRecommendation(
+        vi.fluency, 
+        39, 
         "Practice speaking exercises to improve fluency and reduce hesitations"
       );
-    }
-    if (
-      selectedTest.voiceInsights.clarity &&
-      selectedTest.voiceInsights.clarity <= 39
-    ) {
-      recommendations.push(
+      
+      addRecommendation(
+        vi.clarity, 
+        39, 
         "Focus on clear pronunciation and articulation exercises"
       );
-    }
-    if (selectedTest.voiceInsights.fillerWords <= 39) {
-      recommendations.push(
+      
+      addRecommendation(
+        vi.fillerWords, 
+        39, 
         "Work on reducing filler words through conscious practice and awareness"
       );
-    }
-    if (selectedTest.behaviorInsights.confidenceAndPresence <= 39) {
-      recommendations.push(
-        "Build confidence through regular practice and positive self-talk"
-      );
-    }
-    if (selectedTest.behaviorInsights.engagement <= 39) {
-      recommendations.push(
-        "Practice audience engagement techniques and storytelling"
+      
+      addRecommendation(
+        vi.toneModulation,
+        39,
+        "Vary your tone, pitch, and volume to make your speech more engaging"
       );
     }
 
+    // Behavior insights recommendations
+    if (selectedTest.behaviorInsights) {
+      const bi = selectedTest.behaviorInsights;
+      
+      addRecommendation(
+        bi.confidenceAndPresence, 
+        39, 
+        "Build confidence through regular practice and positive self-talk"
+      );
+      
+      addRecommendation(
+        bi.engagement, 
+        39, 
+        "Practice audience engagement techniques and storytelling"
+      );
+      
+      addRecommendation(
+        bi.emotionalRegulation,
+        39,
+        "Work on managing your emotions and maintaining composure while speaking"
+      );
+      
+      addRecommendation(
+        bi.pacingAndPauses,
+        39,
+        "Practice controlling your speaking rate and using strategic pauses for emphasis"
+      );
+    }
+
+    // Add a general recommendation if no specific ones were added
     if (recommendations.length === 0) {
       recommendations.push(
         "Continue practicing to maintain and further improve your excellent communication skills"
       );
     }
 
+    // Limit the number of recommendations to keep the PDF manageable
+    const maxRecommendations = 5;
+    const limitedRecommendations = recommendations.slice(0, maxRecommendations);
+
+    // Format recommendations for the table
     const recHeaders = ["Priority", "Recommendation"];
-    const recData = recommendations.map((rec, index) => [`${index + 1}`, rec]);
-    const recWidths = [25, 135];
+    const recData = limitedRecommendations.map((rec, index) => [
+      `${index + 1}`, 
+      ensureString(rec) // Ensure the recommendation is a string
+    ]);
+    
+    const recWidths = [20, 140]; // Slightly wider second column for better text wrapping
+    
     yPosition = createTable(recHeaders, recData, yPosition, recWidths);
     yPosition += 10;
 
@@ -750,31 +1017,113 @@ const Results = () => {
     yPosition = addSectionHeader("Speech Transcript", yPosition);
     yPosition += 5;
 
-    yPosition += addNormalText(
-      selectedTest.transcript || "No transcript available",
-      yPosition
-    );
+    // Ensure transcript is a string and handle potential buffer objects
+    let transcriptText = "No transcript available";
+    if (selectedTest.transcript) {
+      if (typeof selectedTest.transcript === 'object' && selectedTest.transcript.buffer) {
+        // Handle buffer objects
+        transcriptText = Buffer.from(selectedTest.transcript.buffer).toString('utf-8');
+      } else if (typeof selectedTest.transcript === 'string') {
+        transcriptText = selectedTest.transcript;
+      } else {
+        // Fallback for other types
+        transcriptText = String(selectedTest.transcript);
+      }
+    }
+
+    // Split the transcript into paragraphs for better readability
+    const paragraphs = transcriptText.split('\n\n').filter(p => p.trim().length > 0);
+    
+    if (paragraphs.length > 0) {
+      for (const paragraph of paragraphs) {
+        // Add each paragraph as a separate text block
+        yPosition += addNormalText(paragraph, yPosition);
+        yPosition += 5; // Add some space between paragraphs
+        
+        // Check if we need a new page
+        if (yPosition > pdfHeight - 20) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+      }
+    } else {
+      yPosition += addNormalText(transcriptText, yPosition);
+    }
+    
     yPosition += 10;
 
     // Footer
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "italic");
     pdf.setTextColor(128, 128, 128);
-    pdf.text(
-      "Generated by Shankh Voice Assessment Platform",
-      margin,
-      pdfHeight - 10
-    );
-    pdf.text(
-      `Report generated on ${new Date().toLocaleDateString()}`,
-      margin,
-      pdfHeight - 5
-    );
-
-    // Save the PDF
-    pdf.save(
-      `shankh-assessment-${userDetails.userName}-${selectedTest.date}.pdf`
-    );
+    
+    // Ensure we have enough space for the footer
+    if (yPosition > pdfHeight - 20) {
+      pdf.addPage();
+      yPosition = margin;
+    }
+    
+    // Add footer text
+    try {
+      pdf.text(
+        "Generated by Shankh Voice Assessment Platform",
+        margin,
+        pdfHeight - 20
+      );
+      
+      // Format the date safely
+      let reportDate;
+      try {
+        reportDate = new Date().toLocaleDateString();
+      } catch (e) {
+        console.error("Error formatting date:", e);
+        reportDate = new Date().toISOString().split('T')[0]; // Fallback to YYYY-MM-DD format
+      }
+      
+      pdf.text(
+        `Report generated on ${reportDate}`,
+        margin,
+        pdfHeight - 10
+      );
+      
+      // Generate a safe filename
+      let userName = "user";
+      try {
+        if (userDetails?.userName) {
+          // Remove any characters that might be invalid in filenames
+          userName = String(userDetails.userName).replace(/[^\w\s-]/g, '').trim() || "user";
+        }
+      } catch (e) {
+        console.error("Error processing username:", e);
+      }
+      
+      let testDate = "";
+      try {
+        if (selectedTest?.date) {
+          // If it's a date object, format it, otherwise use as is
+          const dateObj = new Date(selectedTest.date);
+          testDate = isNaN(dateObj.getTime()) 
+            ? String(selectedTest.date).replace(/[^\w\s-]/g, '').trim() 
+            : dateObj.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        console.error("Error processing test date:", e);
+      }
+      
+      const fileName = `shankh-assessment-${userName}${testDate ? '-' + testDate : ''}.pdf`;
+      
+      // Save the PDF
+      pdf.save(fileName);
+      
+    } catch (e) {
+      console.error("Error generating PDF footer:", e);
+      // Fallback to a simple save if there was an error with the footer
+      try {
+        pdf.save("shankh-assessment-report.pdf");
+      } catch (saveError) {
+        console.error("Failed to save PDF:", saveError);
+      }
+    }
   };
 
   return (
@@ -789,12 +1138,14 @@ const Results = () => {
               >
                 Assessment Result
               </h1>
-              <span
-                style={{ fontFamily: "Inter" }}
-                className="text-[14px] text-[#5F6C7B]"
-              >
-                Test ID : {selectedTest._id} | {selectedTest.date}
-              </span>
+              <SafeRender>
+                <span
+                  style={{ fontFamily: "Inter" }}
+                  className="text-[14px] text-[#5F6C7B]"
+                >
+                  Test ID: {safeRender(selectedTest._id, 'N/A')} | {safeRender(selectedTest.date, 'No date')}
+                </span>
+              </SafeRender>
             </div>
             <button
               onClick={handleDownload}
@@ -836,16 +1187,24 @@ const Results = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr className="pt-2 border-gray-300 text-center  w-full ">
-                  <td className="text-start ">{userDetails.userName}</td>
-                  <td className="text-start ">{userDetails.orgName}</td>
-                  <td className="text-start ">Age</td>
-                  <td className="text-start ">{userDetails.location || "-"}</td>
-                  <td className="text-start ">
-                    {selectedTest.language || "-"}
+                <tr className="pt-2 border-gray-300 text-center w-full">
+                  <td className="text-start">
+                    <SafeRender>{() => safeRender(userDetails?.userName, '-')}</SafeRender>
                   </td>
-                  <td className="text-start ">
-                    {userDetails.occupation || "-"}
+                  <td className="text-start">
+                    <SafeRender>{() => safeRender(userDetails?.orgName, '-')}</SafeRender>
+                  </td>
+                  <td className="text-start">
+                    <SafeRender>{() => safeRender(userDetails?.age, '-')}</SafeRender>
+                  </td>
+                  <td className="text-start">
+                    <SafeRender>{() => safeRender(userDetails?.location, '-')}</SafeRender>
+                  </td>
+                  <td className="text-start">
+                    <SafeRender>{() => safeRender(selectedTest?.language, '-')}</SafeRender>
+                  </td>
+                  <td className="text-start">
+                    <SafeRender>{() => safeRender(userDetails?.occupation, '-')}</SafeRender>
                   </td>
                 </tr>
               </tbody>
@@ -881,29 +1240,40 @@ const Results = () => {
               style={{ fontFamily: "Poppins" }}
               className="text-xl sm:text-[24px] font-semibold"
             >
-              Shankh Score :{" "}
-              <span className="text-[#F9A826]">
-                {Math.ceil(selectedTest.overallScore)}%
-              </span>
+              Shankh Score:{" "}
+              <SafeRender>
+                <span className="text-[#F9A826]">
+                  {safeRender(Math.ceil(selectedTest?.overallScore), '0')}%
+                </span>
+              </SafeRender>
             </span>
           </div>
           <div className="relative">
-            <svg
-              className="absolute  top-[-25px] transform -translate-x-1/2"
-              style={{ left: `${selectedTest.overallScore}%` }}
-              width="36"
-              height="36"
-              viewBox="0 0 24 24"
-              fill="black"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <polygon points="12,16 4,8 20,8" />
-            </svg>
-            <div className="h-[31px] flex">
-              <div className="w-[39%] rounded-l-lg h-[31px] bg-[#FF6B5B]"></div>
-              <div className="w-[30%] h-[31px] bg-[#F9A826]"></div>
-              <div className="w-[31%] rounded-r-lg  h-[31px] bg-[#34856C]"></div>
-            </div>
+            <SafeRender>
+              {() => {
+                const score = safeToNumber(selectedTest?.overallScore, 0);
+                return (
+                  <>
+                    <svg
+                      className="absolute top-[-25px] transform -translate-x-1/2"
+                      style={{ left: `${Math.min(Math.max(score, 0), 100)}%` }}
+                      width="36"
+                      height="36"
+                      viewBox="0 0 24 24"
+                      fill="black"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <polygon points="12,16 4,8 20,8" />
+                    </svg>
+                    <div className="h-[31px] flex">
+                      <div className="w-[39%] rounded-l-lg h-[31px] bg-[#FF6B5B]"></div>
+                      <div className="w-[30%] h-[31px] bg-[#F9A826]"></div>
+                      <div className="w-[31%] rounded-r-lg h-[31px] bg-[#34856C]"></div>
+                    </div>
+                  </>
+                );
+              }}
+            </SafeRender>
             <div
               style={{ fontFamily: "Inter" }}
               className="justify-between text-[14px] text-[#5F6C7B] flex"
@@ -1450,5 +1820,11 @@ const Results = () => {
     </div>
   );
 };
+
+const Results = () => (
+  <ErrorBoundary>
+    <ResultsContent />
+  </ErrorBoundary>
+);
 
 export default Results;

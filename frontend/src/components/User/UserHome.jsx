@@ -21,29 +21,83 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     "Filler Words": 0,
   });
 
+  // Function to deeply sanitize data
+  const sanitizeData = (data) => {
+    if (!data) return data;
+    
+    // If data is an array, process each item
+    if (Array.isArray(data)) {
+      return data.map(item => sanitizeData(item));
+    }
+    
+    // If data is an object, process each property
+    if (typeof data === 'object' && data !== null) {
+      const sanitized = {};
+      
+      // Handle Buffer objects
+      if (data.buffer && typeof data.buffer === 'object') {
+        try {
+          // Convert buffer to string if it's a valid buffer
+          const buffer = data.buffer;
+          if (buffer.byteLength) {
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(new Uint8Array(buffer));
+          }
+        } catch (e) {
+          console.error('Error processing buffer:', e);
+          return '[Buffer]';
+        }
+      }
+      
+      // Process all other object properties
+      Object.keys(data).forEach(key => {
+        const value = data[key];
+        
+        // Skip functions and undefined values
+        if (typeof value === 'function' || value === undefined) return;
+        
+        // Recursively sanitize nested objects/arrays
+        sanitized[key] = sanitizeData(value);
+      });
+      
+      return sanitized;
+    }
+    
+    // Return primitives as-is
+    return data;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/getAllTests`
         );
-        console.log(
-          res.data.data.filter((item) => item.userId !== userDetails?._id)
-        );
-
-        setTemp(
-          res.data.data.filter((item) => item.userId !== userDetails?._id)
-        );
-        setData(
-          res.data.data.filter((item) => item.userId !== userDetails?._id)
-        );
+        
+        // Sanitize the data before setting state
+        const filteredData = res.data.data
+          .filter(item => item.userId !== userDetails?._id)
+          .map(item => ({
+            ...item,
+            // Ensure overallScore is a number
+            overallScore: item.overallScore 
+              ? Number(item.overallScore) || 0 
+              : 0
+          }));
+          
+        const sanitizedData = sanitizeData(filteredData);
+        
+        setTemp(sanitizedData);
+        setData(sanitizedData);
       } catch (error) {
-        console.error("Error fetching test data :", error);
+        console.error("Error fetching test data:", error);
+        setTemp([]);
+        setData([]);
       }
     };
 
     fetchData();
-  }, []);
+  }, [userDetails?._id]);
 
   console.log("data", data);
   useEffect(() => {
@@ -753,22 +807,32 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {data
-                  ? data.map((item, index) => {
-                      if (index < data.length - 5 && !viewAll) {
-                        return null;
-                      }
+                {data && data.length > 0 ? (
+                  data
+                    .filter((_, index) => viewAll || index >= data.length - 5)
+                    .map((item, index) => {
+                      // Ensure we have a valid key
+                      const rowKey = item?._id ? String(item._id) : `row-${index}`;
+                      
+                      // Get display score
+                      const displayScore = (() => {
+                        const score = item?.overallScore;
+                        if (score === undefined || score === null) return 'N/A';
+                        const numScore = Number(score);
+                        return !isNaN(numScore) ? Math.ceil(numScore) : 'N/A';
+                      })();
+                      
                       return (
-                        <tr key={item._id} className="hover:bg-gray-50">
-                          <td className="p-3 hidden md:table-cell truncate max-w-[150px]">
-                            {item._id}
+                        <tr key={rowKey} className="hover:bg-gray-50">
+                          <td className="p-3 hidden md:table-cell truncate max-w-[150px] text-xs">
+                            {item?._id ? String(item._id) : 'N/A'}
                           </td>
-                          <td className="p-3">{item.language}</td>
+                          <td className="p-3">{item?.language ? String(item.language) : 'N/A'}</td>
                           <td className="p-3 whitespace-nowrap">
-                            {new Date(item.date).toLocaleDateString()}
+                            {item?.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="p-3 font-medium">
-                            {Math.ceil(item.overallScore)}%
+                            {displayScore}%
                           </td>
                           <td className="p-3 text-right">
                             <button
@@ -781,7 +845,13 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                         </tr>
                       );
                     })
-                  : null}
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="p-4 text-center text-gray-500">
+                      No test data available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
