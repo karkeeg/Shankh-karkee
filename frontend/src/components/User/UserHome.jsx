@@ -10,7 +10,6 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
   const [temp, setTemp] = useState([]);
   const [data, setData] = useState([]);
 
-  console.log(userDetails);
   const [viewAll, setViewAll] = useState(false);
 
   const [behaviorAverages, setBehaviorAverages] = useState({});
@@ -22,30 +21,85 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     "Filler Words": 0,
   });
 
+  // Function to deeply sanitize data
+  const sanitizeData = (data) => {
+    if (!data) return data;
+    
+    // If data is an array, process each item
+    if (Array.isArray(data)) {
+      return data.map(item => sanitizeData(item));
+    }
+    
+    // If data is an object, process each property
+    if (typeof data === 'object' && data !== null) {
+      const sanitized = {};
+      
+      // Handle Buffer objects
+      if (data.buffer && typeof data.buffer === 'object') {
+        try {
+          // Convert buffer to string if it's a valid buffer
+          const buffer = data.buffer;
+          if (buffer.byteLength) {
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(new Uint8Array(buffer));
+          }
+        } catch (e) {
+          console.error('Error processing buffer:', e);
+          return '[Buffer]';
+        }
+      }
+      
+      // Process all other object properties
+      Object.keys(data).forEach(key => {
+        const value = data[key];
+        
+        // Skip functions and undefined values
+        if (typeof value === 'function' || value === undefined) return;
+        
+        // Recursively sanitize nested objects/arrays
+        sanitized[key] = sanitizeData(value);
+      });
+      
+      return sanitized;
+    }
+    
+    // Return primitives as-is
+    return data;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/getAllTests`
         );
-        console.log(
-          res.data.data.filter((item) => item.userId !== userDetails._id)
-        );
-
-        setTemp(
-          res.data.data.filter((item) => item.userId !== userDetails._id)
-        );
-        setData(
-          res.data.data.filter((item) => item.userId !== userDetails._id)
-        );
+        
+        // Sanitize the data before setting state
+        const filteredData = res.data.data
+          .filter(item => item.userId !== userDetails?._id)
+          .map(item => ({
+            ...item,
+            // Ensure overallScore is a number
+            overallScore: item.overallScore 
+              ? Number(item.overallScore) || 0 
+              : 0
+          }));
+          
+        const sanitizedData = sanitizeData(filteredData);
+        
+        setTemp(sanitizedData);
+        setData(sanitizedData);
       } catch (error) {
-        console.error("Error fetching test data :", error);
+        console.error("Error fetching test data:", error);
+        setTemp([]);
+        setData([]);
       }
     };
 
     fetchData();
-  }, []);
+  }, [userDetails?._id]);
 
+  console.log("data", data);
   useEffect(() => {
     if (language == "All") {
       setData(
@@ -86,29 +140,82 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
       "Tone Modulation": 0,
       "Filler Words": 0,
     };
+
     data.forEach((test) => {
+      // Handle voice insights - check both old and new structure
       if (test.voiceInsights) {
-        newVoiceAverages["Fluency"] += test.voiceInsights.fluency || 0;
-        newVoiceAverages["Clarity"] += test.voiceInsights.clarity || 0;
-        newVoiceAverages["Tone Modulation"] +=
-          test.voiceInsights.toneModulation || 0;
-        newVoiceAverages["Filler Words"] += test.voiceInsights.fillerWords || 0;
+        // New structure with direct fields
+        if (test.fluency) {
+          newVoiceAverages["Fluency"] += test.fluency.fluency_score || 0;
+        } else {
+          // Fallback to old structure
+          newVoiceAverages["Fluency"] += test.voiceInsights.fluency || 0;
+        }
+
+        if (test.vcs) {
+          // Try to get clarity from vcs object
+          const clarityValue =
+            test.vcs["Voice Clarity Score"] ||
+            test.vcs["Voice Clarity Sore"] ||
+            (typeof test.vcs === "object"
+              ? Object.values(test.vcs).find((val) => typeof val === "number")
+              : null);
+          newVoiceAverages["Clarity"] += Number(clarityValue) || 0;
+        } else {
+          // Fallback to old structure
+          newVoiceAverages["Clarity"] += test.voiceInsights.clarity || 0;
+        }
+
+        if (test.tone) {
+          newVoiceAverages["Tone Modulation"] +=
+            test.tone.speech_dynamism_score || 0;
+        } else {
+          newVoiceAverages["Tone Modulation"] +=
+            test.voiceInsights.toneModulation || 0;
+        }
+
+        if (test.filler_words) {
+          newVoiceAverages["Filler Words"] +=
+            test.filler_words.filler_score || 0;
+        } else {
+          newVoiceAverages["Filler Words"] +=
+            test.voiceInsights.fillerWords || 0;
+        }
       }
-      if (test.behaviorInsights) {
+
+      // Handle behavior insights - check both old and new structure
+      if (
+        test.behaviorInsights ||
+        test.vers ||
+        test.voice_confidence ||
+        test.vps ||
+        test.ves
+      ) {
+        // New structure with separate fields
         newBehaviorAverages["Emotional Regulation"] +=
-          test.behaviorInsights.emotionalRegulation || 0;
+          test.vers?.["VERS Score"] ||
+          test.behaviorInsights?.emotionalRegulation ||
+          0;
+
         newBehaviorAverages["Confidence and Presence"] +=
-          test.behaviorInsights.confidenceAndPresence || 0;
+          test.voice_confidence?.["voice_confidence_score"] ||
+          test.behaviorInsights?.confidenceAndPresence ||
+          0;
+
         newBehaviorAverages["Pacing and Pauses"] +=
-          test.behaviorInsights.pacingAndPauses || 0;
+          test.vps?.["VPS"] || test.behaviorInsights?.pacingAndPauses || 0;
+
         newBehaviorAverages["Engagement"] +=
-          test.behaviorInsights.engagement || 0;
+          test.ves?.["ves"] || test.behaviorInsights?.engagement || 0;
       }
     });
+
+    // Calculate averages
     Object.keys(newVoiceAverages).forEach((key) => {
       newVoiceAverages[key] =
         data.length > 0 ? Math.floor(newVoiceAverages[key] / data.length) : 0;
     });
+
     Object.keys(newBehaviorAverages).forEach((key) => {
       newBehaviorAverages[key] =
         data.length > 0
@@ -120,29 +227,66 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
     setVoiceAverages(newVoiceAverages);
   }, [data]);
 
+  // Calculate overall averages
   const behaviourAverage =
-    data.reduce((sum, test) => {
-      const insights = test.behaviorInsights;
-      const avg =
-        (insights.emotionalRegulation +
-          insights.confidenceAndPresence +
-          insights.pacingAndPauses +
-          insights.engagement) /
-        4;
-      return sum + avg;
-    }, 0) / data.length || 0;
+    data.length > 0
+      ? data.reduce((sum, test) => {
+          // Try new structure first, fall back to old structure
+          const emotionalRegulation =
+            test.vers?.["VERS Score"] ||
+            test.behaviorInsights?.emotionalRegulation ||
+            0;
+          const confidenceAndPresence =
+            test.voice_confidence?.["voice_confidence_score"] ||
+            test.behaviorInsights?.confidenceAndPresence ||
+            0;
+          const pacingAndPauses =
+            test.vps?.["VPS"] || test.behaviorInsights?.pacingAndPauses || 0;
+          const engagement =
+            test.ves?.["ves"] || test.behaviorInsights?.engagement || 0;
+
+          const avg =
+            (emotionalRegulation +
+              confidenceAndPresence +
+              pacingAndPauses +
+              engagement) /
+            4;
+          return sum + avg;
+        }, 0) / data.length
+      : 0;
 
   const vocalAverage =
-    data.reduce((sum, test) => {
-      const insights = test.voiceInsights;
-      const avg =
-        (insights.fluency +
-          insights.toneModulation +
-          insights.fillerWords +
-          insights.clarity) /
-        4;
-      return sum + avg;
-    }, 0) / data.length || 0;
+    data.length > 0
+      ? data.reduce((sum, test) => {
+          // Try new structure first, fall back to old structure
+          const fluency =
+            test.fluency?.fluency_score || test.voiceInsights?.fluency || 0;
+
+          let clarity = 0;
+          if (test.vcs) {
+            clarity =
+              test.vcs["Voice Clarity Score"] ||
+              test.vcs["Voice Clarity Sore"] ||
+              (typeof test.vcs === "object"
+                ? Object.values(test.vcs).find((val) => typeof val === "number")
+                : 0);
+          } else {
+            clarity = test.voiceInsights?.clarity || 0;
+          }
+
+          const toneModulation =
+            test.tone?.speech_dynamism_score ||
+            test.voiceInsights?.toneModulation ||
+            0;
+          const fillerWords =
+            test.filler_words?.filler_score ||
+            test.voiceInsights?.fillerWords ||
+            0;
+
+          const avg = (fluency + clarity + toneModulation + fillerWords) / 4;
+          return sum + avg;
+        }, 0) / data.length
+      : 0;
 
   const handleView = (item) => {
     console.log("Selected test data:", JSON.stringify(item, null, 2));
@@ -663,22 +807,32 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {data
-                  ? data.map((item, index) => {
-                      if (index < data.length - 5 && !viewAll) {
-                        return null;
-                      }
+                {data && data.length > 0 ? (
+                  data
+                    .filter((_, index) => viewAll || index >= data.length - 5)
+                    .map((item, index) => {
+                      // Ensure we have a valid key
+                      const rowKey = item?._id ? String(item._id) : `row-${index}`;
+                      
+                      // Get display score
+                      const displayScore = (() => {
+                        const score = item?.overallScore;
+                        if (score === undefined || score === null) return 'N/A';
+                        const numScore = Number(score);
+                        return !isNaN(numScore) ? Math.ceil(numScore) : 'N/A';
+                      })();
+                      
                       return (
-                        <tr key={item._id} className="hover:bg-gray-50">
-                          <td className="p-3 hidden md:table-cell truncate max-w-[150px]">
-                            {item._id}
+                        <tr key={rowKey} className="hover:bg-gray-50">
+                          <td className="p-3 hidden md:table-cell truncate max-w-[150px] text-xs">
+                            {item?._id ? String(item._id) : 'N/A'}
                           </td>
-                          <td className="p-3">{item.language}</td>
+                          <td className="p-3">{item?.language ? String(item.language) : 'N/A'}</td>
                           <td className="p-3 whitespace-nowrap">
-                            {new Date(item.date).toLocaleDateString()}
+                            {item?.date ? new Date(item.date).toLocaleDateString() : 'N/A'}
                           </td>
                           <td className="p-3 font-medium">
-                            {Math.ceil(item.overallScore)}%
+                            {displayScore}%
                           </td>
                           <td className="p-3 text-right">
                             <button
@@ -691,7 +845,13 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                         </tr>
                       );
                     })
-                  : null}
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="p-4 text-center text-gray-500">
+                      No test data available
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

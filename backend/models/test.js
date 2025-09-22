@@ -1,43 +1,118 @@
-
 const mongoose = require("mongoose");
 
 const testSchema = new mongoose.Schema(
     {
-        userId : {
-            type : String,
-            required : true
+        userId: {
+            type: String,
+            required: true
         },
-        orgId : {
-            type : String,
-            required : true
+        orgId: {
+            type: String,
+            required: true
+        },
+        date: {
+            type: String,
+            required: true
+        },
+        language: {
+            type: String,
+        },
+        detected_language: {
+            type: String
+        },
+        overallScore: {
+            type: Number,
         },
         
-        date : {
-            type : String,
-            required : true
+        // Voice Clarity Score
+        vcs: {
+            type: Object,
+            default: {}
         },
-        language : {
-            type : String,
+        
+        // Voice Emotion Recognition Score
+        vers: {
+            type: Object,
+            default: {}
         },
-        overallScore : {
-            type : Number,
+        
+        // Voice Confidence Score
+        voice_confidence: {
+            type: Object,
+            default: {}
         },
-        voiceInsights : {
-            type : Object,
-            required : true
+        
+        // Voice Pitch Score
+        vps: {
+            type: Object,
+            default: {}
         },
-        behaviorInsights : {
-            type : Object,
-            required : true
+        
+        // Voice Engagement Score
+        ves: {
+            type: Object,
+            default: {}
         },
-        fillerWordsUsed : {
-            type : Object,
-            required : true
+        
+        // Raw voice insights
+        voiceInsights: {
+            type: Object,
+            default: {}
         },
-        transcript : {
-            type : String,
-            required : true
+        
+        // Behavioral insights
+        behaviorInsights: {
+            type: Object,
+            default: {}
         },
+        
+        // Filler words analysis
+        filler_words: {
+            type: Object,
+            default: {}
+        },
+        
+        // Speech rate analysis
+        speech_rate: {
+            type: Object,
+            default: {}
+        },
+        
+        // Pitch analysis
+        pitch_analysis: {
+            type: Object,
+            default: {}
+        },
+        
+        // Tone analysis
+        tone: {
+            type: Object,
+            default: {}
+        },
+        
+        // Fluency analysis
+        fluency: {
+            type: Object,
+            default: {}
+        },
+        
+        // Raw transcript
+        transcript: {
+            type: String,
+            required: true
+        },
+        
+        // Raw API response for reference
+        raw_response: {
+            type: Object,
+            default: {}
+        },
+        
+        // Timestamp
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
     }
 )
 
