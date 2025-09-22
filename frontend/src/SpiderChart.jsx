@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   RadarChart,
   PolarGrid,
@@ -8,60 +8,78 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 
-const SpiderChart = ({ testData }) => {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    if (testData) {
-      setData(
-        Object.entries(testData).map(([key, value]) => ({
-          subject: key,
-          value: value,
-        }))
-      );
+const SpiderChart = ({ testData = {} }) => {
+  // Process data with useMemo to prevent unnecessary recalculations
+  const processedData = useMemo(() => {
+    if (!testData || Object.keys(testData).length === 0) {
+      return [];
     }
+    
+    return Object.entries(testData)
+      .filter(([_, value]) => typeof value === 'number' && !isNaN(value))
+      .map(([key, value]) => ({
+        subject: key,
+        value: Math.max(0, Math.min(100, Number(value))) // Ensure value is between 0-100
+      }));
   }, [testData]);
+
+  // Don't render the chart if no valid data
+  if (processedData.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
+        <div className="text-gray-500 text-sm">No data available for the radar chart</div>
+      </div>
+    );
+  }
+
+  // Determine stroke and fill colors based on data
+  const getChartColor = () => {
+    const hasFluency = 'fluency' in testData && testData.fluency !== undefined;
+    return hasFluency ? "#F9A826" : "#FF6B5B";
+  };
+
+  const chartColor = getChartColor();
 
   return (
     <div className="w-full h-full flex items-center justify-center p-2 sm:p-4">
       <ResponsiveContainer width="100%" height={300}>
-        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+        <RadarChart 
+          cx="50%" 
+          cy="50%" 
+          outerRadius="70%" 
+          data={processedData}
+          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+        >
           <PolarGrid radialLines={false} gridType="polygon" />
           <PolarAngleAxis
             dataKey="subject"
             tick={({ payload, x, y, textAnchor, coordinate }) => {
-              // Safely get angle with fallback
+              if (!payload || !payload.value) return null;
+              
               const angle = coordinate?.angle || 0;
               let adjustedX = x || 0;
               let adjustedY = y || 0;
               let anchor = textAnchor || "middle";
-              let fontSize = "8px";
-              let offset = 20;
+              const offset = 20;
 
               // Adjust position based on angle to prevent cutoff
               if (angle >= 45 && angle <= 135) {
-                // Top - move up and center
                 adjustedY = y - offset;
                 anchor = "middle";
               } else if (angle > 135 && angle <= 225) {
-                // Left - move left and right-align
                 adjustedX = x - offset;
                 anchor = "end";
-                // For longer labels on left, add more offset
-                if (payload?.value && payload.value.length > 8) {
+                if (payload.value.toString().length > 8) {
                   adjustedX = x - (offset + 10);
                 }
               } else if (angle > 225 && angle <= 315) {
-                // Bottom - move down and center
                 adjustedY = y + offset;
                 anchor = "middle";
               } else {
-                // Right - move right and left-align
                 adjustedX = x + offset;
                 anchor = "start";
-                // For longer labels on right, add more offset
-                if (payload?.value && payload.value.length > 8) {
-                  adjustedX = x + (offset + -50);
+                if (payload.value.toString().length > 8) {
+                  adjustedX = x + (offset + 10);
                 }
               }
 
@@ -71,10 +89,10 @@ const SpiderChart = ({ testData }) => {
                   y={adjustedY}
                   textAnchor={anchor}
                   fill="black"
-                  style={{ fontSize: fontSize, fontWeight: "500" }}
+                  style={{ fontSize: "10px", fontWeight: 500 }}
                   className="text-xs sm:text-sm"
                 >
-                  {payload?.value || ""}
+                  {payload.value}
                 </text>
               );
             }}
@@ -83,9 +101,12 @@ const SpiderChart = ({ testData }) => {
             angle={90}
             domain={[0, 100]}
             ticks={[0, 39, 69, 100]}
-            tick={({ payload, x, y, textAnchor }) => {
+            tick={({ payload, y }) => {
+              if (!payload || payload.value === undefined) return null;
+              
               let label = "";
-              let fill = "red";
+              let fill = "#666";
+              
               if (payload.value === 0) {
                 label = "Emerging";
                 fill = "#FF6B5B";
@@ -112,11 +133,22 @@ const SpiderChart = ({ testData }) => {
             }}
           />
           <Radar
+            name="Performance"
             dataKey="value"
-            stroke={testData.fluency ? "#F9A826" : "#FF6B5B"}
-            fill={testData.fluency ? "#F9A826" : "#FF6B5B"}
+            stroke={chartColor}
+            fill={chartColor}
             fillOpacity={0.3}
-            dot={true}
+            dot={{
+              stroke: chartColor,
+              strokeWidth: 2,
+              fill: '#fff',
+              r: 3
+            }}
+            activeDot={{
+              stroke: '#fff',
+              strokeWidth: 3,
+              r: 5
+            }}
           />
         </RadarChart>
       </ResponsiveContainer>

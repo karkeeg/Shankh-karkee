@@ -811,8 +811,8 @@ const UserHome = ({ language, startDate, endDate, setStatus }) => {
                   data
                     .filter((_, index) => viewAll || index >= data.length - 5)
                     .map((item, index) => {
-                      // Ensure we have a valid key
-                      const rowKey = item?._id ? String(item._id) : `row-${index}`;
+                      // Create a unique key by combining _id and index to ensure uniqueness
+                      const rowKey = item?._id ? `row-${item._id}-${index}` : `row-${index}-${Date.now()}`;
                       
                       // Get display score
                       const displayScore = (() => {

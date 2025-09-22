@@ -162,9 +162,29 @@ const safeRender = (value, fallback = '') => {
   if (value === null || value === undefined) return fallback;
   
   try {
-    // Handle Buffer objects
-    if (value.buffer) {
-      return Buffer.from(value.buffer).toString('utf-8');
+    // Handle Buffer objects in a browser-compatible way
+    if (value && typeof value === 'object' && value.buffer) {
+      try {
+        // Try to decode as UTF-8 text if it's a typed array
+        if (ArrayBuffer.isView(value.buffer)) {
+          const decoder = new TextDecoder('utf-8');
+          return decoder.decode(value.buffer);
+        }
+        // If it's a plain object with buffer-like structure
+        if (value.buffer && typeof value.buffer === 'object') {
+          try {
+            const uint8Array = new Uint8Array(Object.values(value.buffer));
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(uint8Array);
+          } catch (e) {
+            console.warn('Could not decode buffer:', e);
+            return '[Binary Data]';
+          }
+        }
+      } catch (e) {
+        console.warn('Error processing buffer:', e);
+        return '[Binary Data]';
+      }
     }
     
     // Handle dates
@@ -174,9 +194,30 @@ const safeRender = (value, fallback = '') => {
     
     // Handle objects and arrays
     if (typeof value === 'object') {
+      // Check if it's a nested buffer object
+      if (value.type === 'Buffer' && Array.isArray(value.data)) {
+        try {
+          const uint8Array = new Uint8Array(value.data);
+          const decoder = new TextDecoder('utf-8');
+          return decoder.decode(uint8Array);
+        } catch (e) {
+          console.warn('Error processing Buffer data:', e);
+          return '[Binary Data]';
+        }
+      }
+      
       // Skip rendering complex objects directly
       if (Array.isArray(value) || Object.keys(value).length > 0) {
-        return JSON.stringify(value);
+        try {
+          return JSON.stringify(value, (key, val) => {
+            if (val && val.type === 'Buffer' && Array.isArray(val.data)) {
+              return '[Buffer]';
+            }
+            return val;
+          });
+        } catch (e) {
+          return '[Object]';
+        }
       }
       return fallback;
     }
